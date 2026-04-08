@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import AuthService from '../services/authService';
 
-interface ProtectedRouteProps {
+interface PrivateRouteProps {
   component: React.ComponentType<any>;
   [key: string]: any;
 }
 
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+export const PrivateRoute: React.FC<PrivateRouteProps> = ({
   component: Component,
   ...rest
 }) => {
@@ -28,6 +28,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     // Valida o token com o backend
     const validation = await AuthService.validateToken();
+    if (!validation.valid) {
+      AuthService.removeToken();
+    }
     setIsAuthenticated(validation.valid);
     setIsLoading(false);
   };
@@ -43,5 +46,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   return <Component {...rest} />;
 };
 
-export default ProtectedRoute;
+export default PrivateRoute;
 

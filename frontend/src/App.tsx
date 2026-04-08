@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import ProtectedRoute from './components/ProtectedRoute';
+import PrivateRoute from './components/PrivateRoute';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import { Dashboard } from './components/Dashboard';
@@ -72,7 +72,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Rotas protegidas */}
-        <Route path="/" element={<ProtectedRoute component={AppLayout} />} />
+        <Route path="/" element={<PrivateRoute component={AppLayout} />} />
 
         {/* Redireciona para dashboard se acessar rota inválida */}
         <Route path="*" element={<Navigate to="/" replace />} />
