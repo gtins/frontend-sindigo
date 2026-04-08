@@ -1,0 +1,262 @@
+/* Details View Layout */
+.details-header {
+    margin-bottom: var(--space-lg);
+}
+
+.breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-md);
+}
+
+.breadcrumb-item {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.breadcrumb-item:hover {
+    color: var(--color-primary);
+}
+
+.details-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid #e2e8f0;
+    margin-bottom: var(--space-lg);
+}
+
+.building-title-section {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.building-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.map-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: white;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+/* Quick Stats Row */
+.stats-row {
+    display: flex;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.stat-card {
+    flex: 1;
+    background: #f8fafc;
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid #e2e8f0;
+}
+
+.stat-key {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+    display: block;
+}
+
+.stat-val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* Main Layout Grid */
+.details-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-lg);
+}
+
+/* Section Cards */
+.section-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid #e2e8f0;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+}
+
+.section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Lists */
+.activity-list,
+.ticket-list,
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: var(--space-md);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: white;
+}
+
+.activity-icon {
+    margin-right: var(--space-md);
+    color: var(--text-secondary);
+}
+
+.activity-content {
+    flex: 1;
+    font-weight: 500;
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Ticket Item */
+.ticket-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.ticket-item:last-child {
+    border-bottom: none;
+}
+
+.ticket-status-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.status-priority {
+    background-color: var(--status-orange);
+}
+
+.status-scheduled {
+    background-color: #fbbf24;
+    color: #78350f;
+}
+
+/* Amber */
+.status-solved {
+    background-color: var(--status-green);
+}
+
+/* Sidebar Map */
+.map-placeholder {
+    width: 100%;
+    height: 150px;
+    background-color: #e2e8f0;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+    background-image: url('https://placehold.co/600x400/png?text=Map+View');
+    background-size: cover;
+    background-position: center;
+}
+
+.compliance-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.compliance-tag {
+    background: var(--status-green);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-count {
+    background: var(--status-orange);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+/* Contacts */
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.contact-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.contact-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.contact-role {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.contact-name {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+}
