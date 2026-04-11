@@ -9,15 +9,19 @@ import { BuildingFinances } from './components/BuildingFinances';
 import { buildingDetailsData } from './data/mockData';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { CreateCondominiumModal } from './components/CreateCondominiumModal';
 import './styles/global.css';
 
 type View = 'dashboard' | 'details' | 'finances';
 
 function AppLayout() {
   const [view, setView] = useState<View>('dashboard');
-  const [selectedBuildingId, setSelectedBuildingId] = useState<number | null>(null);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // Optional: mechanism to force refresh Dashboard when new item created
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleBuildingClick = (id: number) => {
+  const handleBuildingClick = (id: string) => {
     setSelectedBuildingId(id);
     setView('details');
   };
@@ -39,13 +43,22 @@ function AppLayout() {
     <div className="dashboard-container">
       <Sidebar />
       <main className="main-content">
-        <TopBar onHomeClick={handleBack} />
+        <TopBar 
+          onHomeClick={handleBack} 
+          onCreateBuildingClick={() => setIsCreateModalOpen(true)}
+        />
 
-        {view === 'dashboard' && <Dashboard onBuildingClick={handleBuildingClick} />}
+        {view === 'dashboard' && (
+          <Dashboard 
+            onBuildingClick={handleBuildingClick} 
+            onCreateBuildingClick={() => setIsCreateModalOpen(true)}
+            refreshKey={refreshKey}
+          />
+        )}
 
         {view === 'details' && selectedBuildingId && (
           <BuildingDetails
-            data={buildingDetailsData[selectedBuildingId] || buildingDetailsData[1]}
+            condominiumId={selectedBuildingId}
             onBack={handleBack}
             onFinancesClick={handleFinancesClick}
           />
@@ -53,12 +66,22 @@ function AppLayout() {
 
         {view === 'finances' && selectedBuildingId && (
           <BuildingFinances
-            data={buildingDetailsData[selectedBuildingId] || buildingDetailsData[1]}
+            data={buildingDetailsData[1]} // Placeholder using mock for finances
             onBack={handleBack}
             onOverviewClick={handleOverviewClick}
           />
         )}
       </main>
+
+      {isCreateModalOpen && (
+        <CreateCondominiumModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onSuccess={() => {
+            setIsCreateModalOpen(false);
+            setRefreshKey(prev => prev + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

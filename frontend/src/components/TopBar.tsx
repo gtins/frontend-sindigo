@@ -6,9 +6,10 @@ import AuthService from '../services/authService';
 
 interface TopBarProps {
     onHomeClick: () => void;
+    onCreateBuildingClick?: () => void;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
+export const TopBar: React.FC<TopBarProps> = ({ onHomeClick, onCreateBuildingClick }) => {
     const navigate = useNavigate();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -28,7 +29,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
             </div>
 
             <div className="top-actions">
-                <button className="secondary-btn">
+                <button className="secondary-btn" onClick={onCreateBuildingClick}>
                     <Plus size={16} />
                     <span>Adicionar prédio</span>
                 </button>

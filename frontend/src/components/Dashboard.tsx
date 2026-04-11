@@ -1,14 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, LayoutGrid, Plus } from 'lucide-react';
 import { BuildingCard } from './BuildingCard';
-import { buildings } from '../data/mockData';
+import CondominiumService from '../services/condominiumService';
+import type { Condominium } from '../types';
 import '../styles/dashboard.css';
 
 interface DashboardProps {
-    onBuildingClick: (id: number) => void;
+    onBuildingClick: (id: string) => void;
+    onCreateBuildingClick?: () => void;
+    refreshKey?: number;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick, onCreateBuildingClick, refreshKey = 0 }) => {
+    const [condos, setCondos] = useState<Condominium[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCondominiums = async () => {
+            setLoading(true);
+            try {
+                const data = await CondominiumService.getAll();
+                setCondos(data);
+            } catch (err) {
+                console.error('Failed to fetch condominiums:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCondominiums();
+    }, [refreshKey]);
     return (
         <div className="content-wrapper">
             <div className="page-header">
@@ -19,7 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick }) => {
                         <Search size={18} />
                         Buscar
                     </button>
-                    <button className="primary-btn">
+                    <button className="primary-btn" onClick={onCreateBuildingClick}>
                         <Plus size={18} />
                         Novo prédio
                     </button>
@@ -63,13 +84,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick }) => {
             </div>
 
             <div className="buildings-grid">
-                {buildings.map((building) => (
-                    <BuildingCard
-                        key={building.id}
-                        data={building}
-                        onClick={() => onBuildingClick(building.id)}
-                    />
-                ))}
+                {loading ? (
+                    <p>Carregando condomínios...</p>
+                ) : condos.length === 0 ? (
+                    <p>Nenhum condomínio encontrado.</p>
+                ) : (
+                    condos.map((building) => (
+                        <BuildingCard
+                            key={building.id}
+                            data={{
+                                id: building.id as any, // Cast to any to reuse mock props temporarily
+                                name: building.name,
+                                units: 0, // Placeholder
+                                tickets: 0, // Placeholder
+                                lastUpdate: 'Agora', // Placeholder
+                                status: 'healthy', // Placeholder
+                            }}
+                            onClick={() => onBuildingClick(building.id)}
+                        />
+                    ))
+                )}
             </div>
         </div>
     );

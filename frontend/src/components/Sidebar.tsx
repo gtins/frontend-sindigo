@@ -25,7 +25,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 <h4 className="sidebar-header">Navegação</h4>
 
                 <nav className="nav-menu">
-                    <a href="#" className="nav-item active">
+                    <a href="#" className="nav-item">
                         <Calendar className="nav-icon" size={20} />
                         <span>Calendário</span>
                     </a>

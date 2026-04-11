@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Building as BuildingIcon,
     MapPin,
@@ -11,41 +11,94 @@ import {
     ChevronRight,
     DollarSign,
     ClipboardCheck,
-    Wrench
+    Wrench,
+    BookOpen
 } from 'lucide-react';
-import type { BuildingDetailsData } from '../data/mockData';
+import CondominiumService from '../services/condominiumService';
+import type { Condominium, Activity, Reservation } from '../types';
 import { StatusBadge } from './StatusBadge';
+import { CreateActivityModal } from './CreateActivityModal';
 import '../styles/details.css';
 
 interface BuildingDetailsProps {
-    data: BuildingDetailsData;
+    condominiumId: string;
     onBack: () => void;
     onFinancesClick: () => void;
 }
 
-export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, onFinancesClick }) => {
+export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId, onBack, onFinancesClick }) => {
+    const [condominium, setCondominium] = useState<Condominium | null>(null);
+    const [activities, setActivities] = useState<Activity[]>([]);
+    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Placeholders
+    const placeholderUnits = 'Placeholder';
+    const placeholderTickets = 'Placeholder';
+    const placeholderStatus: 'healthy' | 'attention' | 'warning' = 'healthy';
+    const placeholderTicketsList = [
+        { id: '1', title: 'Chamado Pendente (Placeholder)', status: 'priority', statusLabel: 'Prioridade', meta: 'N/A' }
+    ];
+    const placeholderContacts = [
+        { id: 1, role: 'Gerente no local', name: 'Placeholder Contact', avatarUrl: 'https://i.pravatar.cc/150?u=placeholder' }
+    ];
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch condomínio
+                const condo = await CondominiumService.getById(condominiumId);
+                setCondominium(condo);
+            } catch (err) {
+                console.error("Error fetching building details:", err);
+            }
+
+            try {
+                const acts = await CondominiumService.getActivities(condominiumId);
+                setActivities(acts || []);
+            } catch (err) {
+                console.error("Activities unavailable:", err);
+            }
+
+            try {
+                const res = await CondominiumService.getReservations(condominiumId);
+                setReservations(res || []);
+            } catch (err) {
+                console.error("Reservations unavailable:", err);
+            }
+
+            setLoading(false);
+        };
+        fetchData();
+    }, [condominiumId, refreshKey]);
+
+    if (loading) {
+        return <div className="dashboard-container"><div className="content-wrapper"><p>Carregando detalhes...</p></div></div>;
+    }
+
+    if (!condominium) {
+        return <div className="dashboard-container"><div className="content-wrapper"><p>Condomínio não encontrado.</p></div></div>;
+    }
+
     return (
         <div className="dashboard-container">
-            {/* Sidebar is rendered by App parent, or should be included here? 
-           Based on Dashboard.tsx structure, Sidebar is sibling to main. 
-           We will assume App handles the layout or we need to wrap this content same as dashboard.
-           For now, let's assume this renders INTO the main content area.
-       */}
-
             <div className="content-wrapper">
                 <div className="details-header">
                     <div className="breadcrumbs">
                         <span className="breadcrumb-item" onClick={onBack}>Visão geral</span>
                         <ChevronRight size={14} />
-                        <span style={{ color: 'var(--text-main)' }}>{data.name}</span>
+                        <span style={{ color: 'var(--text-main)' }}>{condominium.name}</span>
                     </div>
                 </div>
 
                 <div className="details-title-row">
                     <div className="building-title-section">
                         <BuildingIcon size={24} />
-                        <h1 className="building-title">{data.name}</h1>
-                        <StatusBadge status={data.status} count={data.tickets} text={data.statusText} />
+                        <h1 className="building-title">{condominium.name}</h1>
+                        <StatusBadge status={placeholderStatus} count={0 as any} text={placeholderStatus} />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <button className="primary-btn" onClick={onFinancesClick} style={{ backgroundColor: '#1e3a8a' }}>
@@ -65,16 +118,16 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
 
                 <div className="stats-row">
                     <div className="stat-card">
+                        <span className="stat-key">Endereço</span>
+                        <span className="stat-val" style={{ fontSize: '1rem', marginTop: '4px'}}>{condominium.address}</span>
+                    </div>
+                    <div className="stat-card">
                         <span className="stat-key">Unidades</span>
-                        <span className="stat-val">{data.units}</span>
+                        <span className="stat-val">{placeholderUnits}</span>
                     </div>
                     <div className="stat-card">
                         <span className="stat-key">Chamados abertos</span>
-                        <span className="stat-val">{data.tickets}</span>
-                    </div>
-                    <div className="stat-card">
-                        <span className="stat-key">Última atualização</span>
-                        <span className="stat-val">{data.lastUpdate}</span>
+                        <span className="stat-val">{placeholderTickets}</span>
                     </div>
                 </div>
 
@@ -86,22 +139,55 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Atividades recentes</h3>
-                                <button className="action-btn">
+                                <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
                                     <Plus size={16} />
                                     Registrar atividade
                                 </button>
                             </div>
 
                             <div className="activity-list">
-                                {data.activities.map(activity => (
+                                {activities.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
+                                {activities.map(activity => (
                                     <div key={activity.id} className="activity-item">
                                         <div className="activity-icon">
-                                            {activity.type === 'maintenance' && <Wrench size={20} />}
-                                            {activity.type === 'inspection' && <ClipboardCheck size={20} />}
-                                            {activity.type === 'financial' && <DollarSign size={20} />}
+                                            {activity.type === 'MAINTENANCE' && <Wrench size={20} />}
+                                            {activity.type === 'INSPECTION' && <ClipboardCheck size={20} />}
+                                            {activity.type === 'FINANCIAL' && <DollarSign size={20} />}
+                                            {activity.type !== 'MAINTENANCE' && activity.type !== 'INSPECTION' && activity.type !== 'FINANCIAL' && <Calendar size={20} />}
                                         </div>
-                                        <div className="activity-content">{activity.title}</div>
-                                        <div className="activity-time">{activity.time}</div>
+                                        <div className="activity-content">
+                                            <div>{activity.title}</div>
+                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{activity.description}</div>
+                                        </div>
+                                        <div className="activity-time">
+                                            {activity.startDate} a {activity.endDate}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Reservations Section */}
+                        <div className="section-card">
+                            <div className="section-header">
+                                <h3 className="section-title">Reservas</h3>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button className="action-btn">
+                                        <Plus size={16} />
+                                        Nova reserva
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="activity-list">
+                                {reservations.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma reserva encontrada.</p> : null}
+                                {reservations.map(res => (
+                                    <div key={res.id} className="activity-item">
+                                        <div className="activity-icon">
+                                            <BookOpen size={20} />
+                                        </div>
+                                        <div className="activity-content">{res.title || `Reserva #${res.id}`}</div>
+                                        <div className="activity-time">{res.date || 'Data Placeholder'}</div>
                                     </div>
                                 ))}
                             </div>
@@ -110,7 +196,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                         {/* Tickets Section */}
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Chamados abertos ({data.ticketsList.length})</h3>
+                                <h3 className="section-title">Chamados abertos (Placeholder)</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <button className="action-btn">
                                         <Filter size={16} />
@@ -124,7 +210,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                             </div>
 
                             <div className="ticket-list">
-                                {data.ticketsList.map(ticket => (
+                                {placeholderTicketsList.map(ticket => (
                                     <div key={ticket.id} className="ticket-item">
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                             <span className={`ticket-status-badge status-${ticket.status}`}>
@@ -143,10 +229,9 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                     <div className="details-right">
                         <div className="section-card">
                             <div className="section-header" style={{ marginBottom: '1rem' }}>
-                                <h3 className="section-title">Em destaque</h3>
+                                <h3 className="section-title">Em destaque (Placeholder)</h3>
                                 <div className="legend" style={{ marginBottom: 0, fontSize: '0.75rem' }}>
                                     <div className="legend-item"><span className="dot green"></span> Saudável</div>
-                                    {/* Simplified legend for space */}
                                 </div>
                             </div>
 
@@ -166,25 +251,25 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                                     <AlertCircle size={18} />
                                     <span>Chamados abertos</span>
                                 </div>
-                                <span className="badge-count">{data.tickets}</span>
+                                <span className="badge-count">Placeholder</span>
                             </div>
                             <div className="compliance-row" style={{ borderBottom: 'none' }}>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <Calendar size={18} />
                                     <span>Próxima inspeção</span>
                                 </div>
-                                <span className="compliance-tag" style={{ background: '#fbbf24', color: '#78350f' }}>12 de nov</span>
+                                <span className="compliance-tag" style={{ background: '#fbbf24', color: '#78350f' }}>Placeholder</span>
                             </div>
                         </div>
 
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Contatos</h3>
+                                <h3 className="section-title">Contatos (Placeholder)</h3>
                                 <button className="action-btn" style={{ padding: '4px 8px', fontSize: '0.875rem' }}>Ver todos</button>
                             </div>
 
                             <div className="contact-list">
-                                {data.contacts.map(contact => (
+                                {placeholderContacts.map(contact => (
                                     <div key={contact.id} className="contact-item">
                                         <div className="contact-info">
                                             <img src={contact.avatarUrl} alt={contact.name} className="contact-avatar" />
@@ -198,6 +283,17 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ data, onBack, 
                     </div>
                 </div>
             </div>
+
+            {isCreateActivityOpen && (
+                <CreateActivityModal
+                    condominiumId={condominiumId}
+                    onClose={() => setIsCreateActivityOpen(false)}
+                    onSuccess={() => {
+                        setIsCreateActivityOpen(false);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                />
+            )}
         </div>
     );
 };
