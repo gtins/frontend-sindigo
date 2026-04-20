@@ -17,11 +17,12 @@ import {
     X
 } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
-import type { Condominium, Activity, Reservation, Ticket } from '../types';
+import type { Condominium, Activity, Reservation, Ticket, Provider } from '../types';
 import { StatusBadge } from './StatusBadge';
 import { CreateActivityModal } from './CreateActivityModal';
 import { CreateReservationModal } from './CreateReservationModal';
 import { CreateTicketModal } from './CreateTicketModal';
+import { CreateProviderModal } from './CreateProviderModal';
 import '../styles/details.css';
 
 interface BuildingDetailsProps {
@@ -35,10 +36,12 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
     const [activities, setActivities] = useState<Activity[]>([]);
     const [reservations, setReservations] = useState<Reservation[]>([]);
     const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [providers, setProviders] = useState<Provider[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false);
     const [isCreateReservationOpen, setIsCreateReservationOpen] = useState(false);
     const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
+    const [isCreateProviderOpen, setIsCreateProviderOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const handleApproveReservation = async (reservationId: string, status: 'CONFIRMED' | 'CANCELLED') => {
@@ -65,9 +68,6 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
     const placeholderStatus: 'healthy' | 'attention' | 'warning' = 'healthy';
     const placeholderTicketsList = [
         { id: '1', title: 'Chamado Pendente (Placeholder)', status: 'priority', statusLabel: 'Prioridade', meta: 'N/A' }
-    ];
-    const placeholderContacts = [
-        { id: 1, role: 'Gerente no local', name: 'Placeholder Contact', avatarUrl: 'https://i.pravatar.cc/150?u=placeholder' }
     ];
 
     useEffect(() => {
@@ -112,6 +112,17 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                 setTickets(ticketsData || []);
             } catch (err) {
                 console.error("Tickets unavailable:", err);
+            }
+
+            try {
+                const provs = await CondominiumService.getProviders(condominiumId);
+                let providersData = provs;
+                if (provs && !Array.isArray(provs)) {
+                    providersData = (provs as any).content || (provs as any).data || (provs as any).items || [];
+                }
+                setProviders(providersData || []);
+            } catch (err) {
+                console.error("Providers unavailable:", err);
             }
 
             setLoading(false);
@@ -345,18 +356,28 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
 
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Contatos (Placeholder)</h3>
-                                <button className="action-btn" style={{ padding: '4px 8px', fontSize: '0.875rem' }}>Ver todos</button>
+                                <h3 className="section-title">Prestadores de Serviço</h3>
+                                <button className="action-btn" onClick={() => setIsCreateProviderOpen(true)} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
+                                    <Plus size={14} style={{ marginRight: '4px' }} /> Novo
+                                </button>
                             </div>
 
                             <div className="contact-list">
-                                {placeholderContacts.map(contact => (
-                                    <div key={contact.id} className="contact-item">
-                                        <div className="contact-info">
-                                            <img src={contact.avatarUrl} alt={contact.name} className="contact-avatar" />
-                                            <span className="contact-role">{contact.role}</span>
+                                {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
+                                {providers.map(provider => (
+                                    <div key={provider.id} className="contact-item" style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
+                                                {provider.name.charAt(0)}
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                <span className="contact-name" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
+                                                <span className="contact-role" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
+                                                     {provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : provider.serviceType === 'PLUMBER' ? 'Encanador' : provider.serviceType === 'GARDENER' ? 'Jardineiro' : provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros'}
+                                                </span>
+                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
+                                            </div>
                                         </div>
-                                        <span className="contact-name">{contact.name}</span>
                                     </div>
                                 ))}
                             </div>
@@ -369,6 +390,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                 <CreateActivityModal
                     condominiumId={condominiumId}
                     tickets={tickets}
+                    providers={providers}
                     onClose={() => setIsCreateActivityOpen(false)}
                     onSuccess={() => {
                         setIsCreateActivityOpen(false);
@@ -394,6 +416,17 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                     onClose={() => setIsCreateTicketOpen(false)}
                     onSuccess={() => {
                         setIsCreateTicketOpen(false);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                />
+            )}
+
+            {isCreateProviderOpen && (
+                <CreateProviderModal
+                    condominiumId={condominiumId}
+                    onClose={() => setIsCreateProviderOpen(false)}
+                    onSuccess={() => {
+                        setIsCreateProviderOpen(false);
                         setRefreshKey(prev => prev + 1);
                     }}
                 />

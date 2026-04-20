@@ -89,6 +89,8 @@ export interface CreateProviderPayload {
   phone: string;
   email?: string;
   notes?: string;
+}
+
 export interface Ticket {
   id: string;
   condominiumId: string;

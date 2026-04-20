@@ -6,17 +6,19 @@ import type { CreateActivityPayload, Ticket } from '../types';
 interface CreateActivityModalProps {
     condominiumId: string;
     tickets?: Ticket[];
+    providers?: Provider[];
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condominiumId, tickets = [], onClose, onSuccess }) => {
+export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condominiumId, tickets = [], providers = [], onClose, onSuccess }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [type, setType] = useState('ONCE');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [ticketId, setTicketId] = useState('');
+    const [providerId, setProviderId] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -35,6 +37,7 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
             const payload: CreateActivityPayload = { 
                 title, description, type, startDate, endDate,
                 ticketId: ticketId ? ticketId : undefined,
+                providerId: providerId ? providerId : undefined,
                 origin: ticketId ? 'CHAMADO' : undefined
             };
             await CondominiumService.createActivity(condominiumId, payload);
@@ -87,14 +90,25 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
                         </div>
                     </div>
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Vincular Chamado (Opcional)</label>
-                        <select value={ticketId} onChange={(e) => setTicketId(e.target.value)} style={inputStyle}>
-                            <option value="">Nenhum / Não vincular</option>
-                            {tickets.map(t => (
-                                <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
-                            ))}
-                        </select>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                        <div style={{ ...inputGroupStyle, flex: 1 }}>
+                            <label style={labelStyle}>Vincular Chamado (Opcional)</label>
+                            <select value={ticketId} onChange={(e) => setTicketId(e.target.value)} style={inputStyle}>
+                                <option value="">Não vincular</option>
+                                {tickets.map(t => (
+                                    <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div style={{ ...inputGroupStyle, flex: 1 }}>
+                            <label style={labelStyle}>Vincular Prestador (Opcional)</label>
+                            <select value={providerId} onChange={(e) => setProviderId(e.target.value)} style={inputStyle}>
+                                <option value="">Não vincular</option>
+                                {providers.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name} ({p.serviceType})</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     
                     <div style={footerStyle}>
