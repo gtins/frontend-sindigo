@@ -12,12 +12,16 @@ import {
     DollarSign,
     ClipboardCheck,
     Wrench,
-    BookOpen
+    BookOpen,
+    Check,
+    X
 } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
-import type { Condominium, Activity, Reservation } from '../types';
+import type { Condominium, Activity, Reservation, Ticket } from '../types';
 import { StatusBadge } from './StatusBadge';
 import { CreateActivityModal } from './CreateActivityModal';
+import { CreateReservationModal } from './CreateReservationModal';
+import { CreateTicketModal } from './CreateTicketModal';
 import '../styles/details.css';
 
 interface BuildingDetailsProps {
@@ -30,9 +34,30 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
     const [condominium, setCondominium] = useState<Condominium | null>(null);
     const [activities, setActivities] = useState<Activity[]>([]);
     const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [tickets, setTickets] = useState<Ticket[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false);
+    const [isCreateReservationOpen, setIsCreateReservationOpen] = useState(false);
+    const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const handleApproveReservation = async (reservationId: string, status: 'CONFIRMED' | 'CANCELLED') => {
+        let reason = '';
+        if (status === 'CANCELLED') {
+            reason = window.prompt('Motivo da rejeição (Opcional):') || '';
+        }
+        
+        try {
+            await CondominiumService.approveReservation(condominiumId, reservationId, { 
+                status, 
+                reason: reason.trim() ? reason.trim() : undefined 
+            });
+            setRefreshKey(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to update reservation status:', error);
+            alert('Não foi possível alterar a reserva. Verifique se o status permite alteração ou suas permissões.');
+        }
+    };
 
     // Placeholders
     const placeholderUnits = 'Placeholder';
@@ -58,16 +83,35 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
 
             try {
                 const acts = await CondominiumService.getActivities(condominiumId);
-                setActivities(acts || []);
+                let activitiesData = acts;
+                if (acts && !Array.isArray(acts)) {
+                    activitiesData = (acts as any).content || (acts as any).data || (acts as any).items || [];
+                }
+                setActivities(activitiesData || []);
             } catch (err) {
                 console.error("Activities unavailable:", err);
             }
 
             try {
                 const res = await CondominiumService.getReservations(condominiumId);
-                setReservations(res || []);
+                let reservationsData = res;
+                if (res && !Array.isArray(res)) {
+                    reservationsData = (res as any).content || (res as any).data || (res as any).items || [];
+                }
+                setReservations(reservationsData || []);
             } catch (err) {
                 console.error("Reservations unavailable:", err);
+            }
+
+            try {
+                const tkts = await CondominiumService.getTickets(condominiumId);
+                let ticketsData = tkts;
+                if (tkts && !Array.isArray(tkts)) {
+                    ticketsData = (tkts as any).content || (tkts as any).data || (tkts as any).items || [];
+                }
+                setTickets(ticketsData || []);
+            } catch (err) {
+                console.error("Tickets unavailable:", err);
             }
 
             setLoading(false);
@@ -119,7 +163,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                 <div className="stats-row">
                     <div className="stat-card">
                         <span className="stat-key">Endereço</span>
-                        <span className="stat-val" style={{ fontSize: '1rem', marginTop: '4px'}}>{condominium.address}</span>
+                        <span className="stat-val" style={{ fontSize: '1rem', marginTop: '4px' }}>{condominium.address}</span>
                     </div>
                     <div className="stat-card">
                         <span className="stat-key">Unidades</span>
@@ -146,17 +190,24 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             </div>
 
                             <div className="activity-list">
-                                {activities.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
-                                {activities.map(activity => (
+                                {(!Array.isArray(activities) || activities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
+                                {Array.isArray(activities) && activities.map(activity => (
                                     <div key={activity.id} className="activity-item">
                                         <div className="activity-icon">
-                                            {activity.type === 'MAINTENANCE' && <Wrench size={20} />}
-                                            {activity.type === 'INSPECTION' && <ClipboardCheck size={20} />}
-                                            {activity.type === 'FINANCIAL' && <DollarSign size={20} />}
-                                            {activity.type !== 'MAINTENANCE' && activity.type !== 'INSPECTION' && activity.type !== 'FINANCIAL' && <Calendar size={20} />}
+                                            {activity.type === 'ONCE' && <Calendar size={20} color="#64748b" />}
+                                            {activity.type === 'PERIODIC' && <Calendar size={20} color="#22c55e" />}
                                         </div>
                                         <div className="activity-content">
-                                            <div>{activity.title}</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <span>{activity.title}</span>
+                                                <span style={{
+                                                    fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600,
+                                                    backgroundColor: activity.type === 'ONCE' ? '#f1f5f9' : '#dcfce7',
+                                                    color: activity.type === 'ONCE' ? '#475569' : '#15803d'
+                                                }}>
+                                                    {activity.type === 'ONCE' ? 'Única' : 'Periódica'}
+                                                </span>
+                                            </div>
                                             <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{activity.description}</div>
                                         </div>
                                         <div className="activity-time">
@@ -172,7 +223,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             <div className="section-header">
                                 <h3 className="section-title">Reservas</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button className="action-btn">
+                                    <button className="action-btn" onClick={() => setIsCreateReservationOpen(true)}>
                                         <Plus size={16} />
                                         Nova reserva
                                     </button>
@@ -180,14 +231,39 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             </div>
 
                             <div className="activity-list">
-                                {reservations.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma reserva encontrada.</p> : null}
-                                {reservations.map(res => (
+                                {(!Array.isArray(reservations) || reservations.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma reserva encontrada.</p> : null}
+                                {Array.isArray(reservations) && reservations.map(res => (
                                     <div key={res.id} className="activity-item">
                                         <div className="activity-icon">
                                             <BookOpen size={20} />
                                         </div>
-                                        <div className="activity-content">{res.title || `Reserva #${res.id}`}</div>
-                                        <div className="activity-time">{res.date || 'Data Placeholder'}</div>
+                                        <div className="activity-content">{res.area || `Reserva #${res.id}`}</div>
+                                        <div className="activity-time" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <span>
+                                                {res.startTime ? new Date(res.startTime).toLocaleString('pt-BR') : ''} - {res.endTime ? new Date(res.endTime).toLocaleString('pt-BR') : ''}
+                                                {res.status && ` (${res.status})`}
+                                            </span>
+                                            {res.status === 'PENDING' && (
+                                                <div style={{ display: 'flex', gap: '4px' }}>
+                                                    <button 
+                                                        className="action-btn" 
+                                                        style={{ color: '#22c55e', padding: '4px', border: '1px solid #22c55e', minWidth: 'auto' }}
+                                                        onClick={(e) => { e.stopPropagation(); handleApproveReservation(res.id, 'CONFIRMED'); }}
+                                                        title="Aprovar Reserva"
+                                                    >
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button 
+                                                        className="action-btn" 
+                                                        style={{ color: '#ef4444', padding: '4px', border: '1px solid #ef4444', minWidth: 'auto' }}
+                                                        onClick={(e) => { e.stopPropagation(); handleApproveReservation(res.id, 'CANCELLED'); }}
+                                                        title="Rejeitar Reserva"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -196,13 +272,13 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                         {/* Tickets Section */}
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Chamados abertos (Placeholder)</h3>
+                                <h3 className="section-title">Chamados abertos</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <button className="action-btn">
                                         <Filter size={16} />
                                         Filtrar
                                     </button>
-                                    <button className="action-btn">
+                                    <button className="action-btn" onClick={() => setIsCreateTicketOpen(true)}>
                                         <Plus size={16} />
                                         Novo chamado
                                     </button>
@@ -210,15 +286,20 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             </div>
 
                             <div className="ticket-list">
-                                {placeholderTicketsList.map(ticket => (
-                                    <div key={ticket.id} className="ticket-item">
+                                {tickets.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum chamado aberto.</p> : null}
+                                {tickets.map(ticket => (
+                                    <div key={ticket.id} className="ticket-item" style={{ cursor: 'pointer' }}>
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <span className={`ticket-status-badge status-${ticket.status}`}>
-                                                {ticket.statusLabel}
+                                            <span style={{
+                                                backgroundColor: ticket.priority === 'URGENTE' || ticket.priority === 'CRITICA' ? '#fee2e2' : ticket.priority === 'ALTA' ? '#ffedd5' : ticket.priority === 'MEDIA' ? '#fef3c7' : '#dbeafe',
+                                                color: ticket.priority === 'URGENTE' || ticket.priority === 'CRITICA' ? '#b91c1c' : ticket.priority === 'ALTA' ? '#c2410c' : ticket.priority === 'MEDIA' ? '#b45309' : '#1d4ed8',
+                                                padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600
+                                            }}>
+                                                {ticket.priority}
                                             </span>
                                             <span style={{ fontWeight: 500 }}>{ticket.title}</span>
                                         </div>
-                                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{ticket.meta}</span>
+                                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{ticket.status} • {ticket.category}</span>
                                     </div>
                                 ))}
                             </div>
@@ -287,9 +368,32 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
             {isCreateActivityOpen && (
                 <CreateActivityModal
                     condominiumId={condominiumId}
+                    tickets={tickets}
                     onClose={() => setIsCreateActivityOpen(false)}
                     onSuccess={() => {
                         setIsCreateActivityOpen(false);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                />
+            )}
+
+            {isCreateReservationOpen && (
+                <CreateReservationModal
+                    condominiumId={condominiumId}
+                    onClose={() => setIsCreateReservationOpen(false)}
+                    onSuccess={() => {
+                        setIsCreateReservationOpen(false);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                />
+            )}
+
+            {isCreateTicketOpen && (
+                <CreateTicketModal
+                    condominiumId={condominiumId}
+                    onClose={() => setIsCreateTicketOpen(false)}
+                    onSuccess={() => {
+                        setIsCreateTicketOpen(false);
                         setRefreshKey(prev => prev + 1);
                     }}
                 />

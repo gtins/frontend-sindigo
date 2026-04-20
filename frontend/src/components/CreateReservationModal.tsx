@@ -1,22 +1,18 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
-import type { CreateActivityPayload, Ticket } from '../types';
+import type { CreateReservationPayload } from '../types';
 
-interface CreateActivityModalProps {
+interface CreateReservationModalProps {
     condominiumId: string;
-    tickets?: Ticket[];
     onClose: () => void;
     onSuccess: () => void;
 }
 
-export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condominiumId, tickets = [], onClose, onSuccess }) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [type, setType] = useState('ONCE');
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [ticketId, setTicketId] = useState('');
+export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ condominiumId, onClose, onSuccess }) => {
+    const [area, setArea] = useState('');
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -25,23 +21,13 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
         setLoading(true);
         setError('');
 
-        if (new Date(startDate) > new Date(endDate)) {
-            setError('A data de início não pode ser depois da data final.');
-            setLoading(false);
-            return;
-        }
-
         try {
-            const payload: CreateActivityPayload = { 
-                title, description, type, startDate, endDate,
-                ticketId: ticketId ? ticketId : undefined,
-                origin: ticketId ? 'CHAMADO' : undefined
-            };
-            await CondominiumService.createActivity(condominiumId, payload);
+            const payload: CreateReservationPayload = { area, startTime, endTime };
+            await CondominiumService.createReservation(condominiumId, payload);
             onSuccess();
         } catch (err: any) {
-            console.error('Error creating activity:', err);
-            setError('Falha ao criar a atividade. Tente novamente.');
+            console.error('Error creating reservation:', err);
+            setError('Falha ao criar a reserva. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -51,7 +37,7 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
         <div style={overlayStyle}>
             <div style={modalStyle}>
                 <div style={headerStyle}>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Registrar atividade</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Nova Reserva</h2>
                     <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
                 </div>
                 
@@ -59,48 +45,34 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
                 
                 <form onSubmit={handleSubmit} style={formStyle}>
                     <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Título</label>
-                        <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} placeholder="Ex: Limpeza da Piscina" />
-                    </div>
-                    
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Descrição</label>
-                        <textarea required value={description} onChange={(e) => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Limpeza com filtragem" />
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Tipo</label>
-                        <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
-                            <option value="ONCE">Única</option>
-                            <option value="PERIODIC">Periódica</option>
+                        <label style={labelStyle}>Área</label>
+                        <select required value={area} onChange={(e) => setArea(e.target.value)} style={inputStyle}>
+                            <option value="">Selecione uma área...</option>
+                            <option value="Salão de Festas">Salão de Festas</option>
+                            <option value="Churrasqueira">Churrasqueira</option>
+                            <option value="Quadra Poliesportiva">Quadra Poliesportiva</option>
+                            <option value="Piscina">Piscina</option>
+                            <option value="Academia">Academia</option>
+                            <option value="Espaço Gourmet">Espaço Gourmet</option>
                         </select>
                     </div>
 
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data de Início</label>
-                            <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
+                            <label style={labelStyle}>Data e Hora Início</label>
+                            <input type="datetime-local" required value={startTime} step="1" onChange={(e) => setStartTime(e.target.value)} style={inputStyle} />
                         </div>
+                        
                         <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data Final</label>
-                            <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
+                            <label style={labelStyle}>Data e Hora Fim</label>
+                            <input type="datetime-local" required value={endTime} step="1" onChange={(e) => setEndTime(e.target.value)} style={inputStyle} />
                         </div>
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Vincular Chamado (Opcional)</label>
-                        <select value={ticketId} onChange={(e) => setTicketId(e.target.value)} style={inputStyle}>
-                            <option value="">Nenhum / Não vincular</option>
-                            {tickets.map(t => (
-                                <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
-                            ))}
-                        </select>
                     </div>
                     
                     <div style={footerStyle}>
                         <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading}>Cancelar</button>
                         <button type="submit" style={submitBtnStyle} disabled={loading}>
-                            {loading ? 'Salvando...' : 'Registrar atividade'}
+                            {loading ? 'Salvando...' : 'Confirmar Reserva'}
                         </button>
                     </div>
                 </form>
