@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, LayoutGrid, Plus } from 'lucide-react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { BuildingCard } from './BuildingCard';
 import CondominiumService from '../services/condominiumService';
 import type { Condominium } from '../types';
 import '../styles/dashboard.css';
 
-interface DashboardProps {
-    onBuildingClick: (id: string) => void;
-    onCreateBuildingClick?: () => void;
-    refreshKey?: number;
-}
+export const Dashboard: React.FC = () => {
+    const navigate = useNavigate();
+    const { refreshKey = 0, setIsCreateModalOpen } = useOutletContext<{ refreshKey: number, setIsCreateModalOpen: (open: boolean) => void }>() || {};
 
-export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick, onCreateBuildingClick, refreshKey = 0 }) => {
     const [condos, setCondos] = useState<Condominium[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -40,7 +38,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick, onCreateB
                         <Search size={18} />
                         Buscar
                     </button>
-                    <button className="primary-btn" onClick={onCreateBuildingClick}>
+                    <button className="primary-btn" onClick={() => setIsCreateModalOpen?.(true)}>
                         <Plus size={18} />
                         Novo prédio
                     </button>
@@ -100,7 +98,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onBuildingClick, onCreateB
                                 lastUpdate: 'Agora', // Placeholder
                                 status: 'healthy', // Placeholder
                             }}
-                            onClick={() => onBuildingClick(building.id)}
+                            onClick={() => navigate(`/buildings/${building.id}`)}
                         />
                     ))
                 )}

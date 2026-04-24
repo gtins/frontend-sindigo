@@ -11,17 +11,18 @@ import {
     TrendingDown,
     Menu // for 'Saldo do mês' lines icon
 } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
 import type { BuildingDetailsData } from '../data/mockData';
 import '../styles/details.css';
 import '../styles/finances.css';
 
 interface BuildingFinancesProps {
     data: BuildingDetailsData;
-    onBack: () => void;
-    onOverviewClick: () => void;
 }
 
-export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data, onBack, onOverviewClick }) => {
+export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data }) => {
+    const { id: condominiumId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const finances = data.finances;
 
     if (!finances) {
@@ -33,9 +34,9 @@ export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data, onBack
             <div className="content-wrapper">
                 <div className="details-header">
                     <div className="breadcrumbs">
-                        <span className="breadcrumb-item" onClick={onBack}>Visão geral</span>
+                        <span className="breadcrumb-item" onClick={() => navigate('/')}>Visão geral</span>
                         <ChevronRight size={14} />
-                        <span className="breadcrumb-item" onClick={onOverviewClick}>{data.name}</span>
+                        <span className="breadcrumb-item" onClick={() => navigate(`/buildings/${condominiumId}`)}>{data.name}</span>
                         <ChevronRight size={14} />
                         <span style={{ color: 'var(--text-main)' }}>Finanças</span>
                     </div>

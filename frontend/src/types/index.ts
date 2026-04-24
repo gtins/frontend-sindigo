@@ -65,6 +65,7 @@ export interface CreateFinancialEntryPayload {
   description: string;
   amount: number;
   type: 'INCOME' | 'EXPENSE';
+  date: string;
 }
 
 export interface Balance {

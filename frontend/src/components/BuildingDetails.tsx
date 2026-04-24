@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     Building as BuildingIcon,
     MapPin,
@@ -23,15 +24,12 @@ import { CreateActivityModal } from './CreateActivityModal';
 import { CreateReservationModal } from './CreateReservationModal';
 import { CreateTicketModal } from './CreateTicketModal';
 import { CreateProviderModal } from './CreateProviderModal';
+import { ItemDetailsModal } from './ItemDetailsModal';
 import '../styles/details.css';
 
-interface BuildingDetailsProps {
-    condominiumId: string;
-    onBack: () => void;
-    onFinancesClick: () => void;
-}
-
-export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId, onBack, onFinancesClick }) => {
+export const BuildingDetails: React.FC = () => {
+    const { id: condominiumId } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [condominium, setCondominium] = useState<Condominium | null>(null);
     const [activities, setActivities] = useState<Activity[]>([]);
     const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -43,6 +41,14 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
     const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
     const [isCreateProviderOpen, setIsCreateProviderOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const [selectedItem, setSelectedItem] = useState<Activity | Reservation | Ticket | Provider | null>(null);
+    const [itemType, setItemType] = useState<'activity' | 'reservation' | 'ticket' | 'provider' | null>(null);
+
+    const handleItemClick = (item: any, type: 'activity' | 'reservation' | 'ticket' | 'provider') => {
+        setSelectedItem(item);
+        setItemType(type);
+    };
 
     const handleApproveReservation = async (reservationId: string, status: 'CONFIRMED' | 'CANCELLED') => {
         let reason = '';
@@ -127,9 +133,13 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
 
             setLoading(false);
         };
-        fetchData();
+        if (condominiumId) {
+            fetchData();
+        }
     }, [condominiumId, refreshKey]);
 
+    if (!condominiumId) return <div>ID do condomínio não foi providenciado.</div>;
+    
     if (loading) {
         return <div className="dashboard-container"><div className="content-wrapper"><p>Carregando detalhes...</p></div></div>;
     }
@@ -143,7 +153,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
             <div className="content-wrapper">
                 <div className="details-header">
                     <div className="breadcrumbs">
-                        <span className="breadcrumb-item" onClick={onBack}>Visão geral</span>
+                        <span className="breadcrumb-item" onClick={() => navigate('/')}>Visão geral</span>
                         <ChevronRight size={14} />
                         <span style={{ color: 'var(--text-main)' }}>{condominium.name}</span>
                     </div>
@@ -156,9 +166,13 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                         <StatusBadge status={placeholderStatus} count={0 as any} text={placeholderStatus} />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="primary-btn" onClick={onFinancesClick} style={{ backgroundColor: '#1e3a8a' }}>
+                        <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances`)} style={{ backgroundColor: '#10b981' }}>
                             <DollarSign size={16} />
                             Finanças
+                        </button>
+                        <button className="secondary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances-mock`)} style={{ border: '1px solid #1e3a8a', color: '#1e3a8a', backgroundColor: 'transparent' }}>
+                            <DollarSign size={16} />
+                            Finanças (Mock)
                         </button>
                         <button className="map-btn">
                             <MapPin size={16} />
@@ -203,14 +217,14 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             <div className="activity-list">
                                 {(!Array.isArray(activities) || activities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
                                 {Array.isArray(activities) && activities.map(activity => (
-                                    <div key={activity.id} className="activity-item">
-                                        <div className="activity-icon">
+                                    <div key={activity.id} className="activity-item clickable-item" onClick={() => handleItemClick(activity, 'activity')}>
+                                        <div className="activity-icon hover-icon-white">
                                             {activity.type === 'ONCE' && <Calendar size={20} color="#64748b" />}
                                             {activity.type === 'PERIODIC' && <Calendar size={20} color="#22c55e" />}
                                         </div>
                                         <div className="activity-content">
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span>{activity.title}</span>
+                                                <span className="hover-text-white">{activity.title}</span>
                                                 <span style={{
                                                     fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600,
                                                     backgroundColor: activity.type === 'ONCE' ? '#f1f5f9' : '#dcfce7',
@@ -219,9 +233,9 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                                                     {activity.type === 'ONCE' ? 'Única' : 'Periódica'}
                                                 </span>
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{activity.description}</div>
+                                            <div className="hover-text-white" style={{ fontSize: '0.75rem', color: '#64748b' }}>{activity.description}</div>
                                         </div>
-                                        <div className="activity-time">
+                                        <div className="activity-time hover-text-white">
                                             {activity.startDate} a {activity.endDate}
                                         </div>
                                     </div>
@@ -244,13 +258,13 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             <div className="activity-list">
                                 {(!Array.isArray(reservations) || reservations.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma reserva encontrada.</p> : null}
                                 {Array.isArray(reservations) && reservations.map(res => (
-                                    <div key={res.id} className="activity-item">
-                                        <div className="activity-icon">
+                                    <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')}>
+                                        <div className="activity-icon hover-icon-white">
                                             <BookOpen size={20} />
                                         </div>
-                                        <div className="activity-content">{res.area || `Reserva #${res.id}`}</div>
+                                        <div className="activity-content hover-text-white">{res.area || `Reserva #${res.id}`}</div>
                                         <div className="activity-time" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span>
+                                            <span className="hover-text-white">
                                                 {res.startTime ? new Date(res.startTime).toLocaleString('pt-BR') : ''} - {res.endTime ? new Date(res.endTime).toLocaleString('pt-BR') : ''}
                                                 {res.status && ` (${res.status})`}
                                             </span>
@@ -299,7 +313,7 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             <div className="ticket-list">
                                 {tickets.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum chamado aberto.</p> : null}
                                 {tickets.map(ticket => (
-                                    <div key={ticket.id} className="ticket-item" style={{ cursor: 'pointer' }}>
+                                    <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')}>
                                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                             <span style={{
                                                 backgroundColor: ticket.priority === 'URGENTE' || ticket.priority === 'CRITICA' ? '#fee2e2' : ticket.priority === 'ALTA' ? '#ffedd5' : ticket.priority === 'MEDIA' ? '#fef3c7' : '#dbeafe',
@@ -308,9 +322,9 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                                             }}>
                                                 {ticket.priority}
                                             </span>
-                                            <span style={{ fontWeight: 500 }}>{ticket.title}</span>
+                                            <span className="hover-text-white" style={{ fontWeight: 500 }}>{ticket.title}</span>
                                         </div>
-                                        <span style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{ticket.status} • {ticket.category}</span>
+                                        <span className="hover-text-white" style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{ticket.status} • {ticket.category}</span>
                                     </div>
                                 ))}
                             </div>
@@ -365,17 +379,17 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                             <div className="contact-list">
                                 {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
                                 {providers.map(provider => (
-                                    <div key={provider.id} className="contact-item" style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer' }}>
+                                    <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
+                                            <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
                                                 {provider.name.charAt(0)}
                                             </div>
                                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span className="contact-name" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
-                                                <span className="contact-role" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
+                                                <span className="contact-name hover-text-white" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
+                                                <span className="contact-role hover-text-white" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
                                                      {provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : provider.serviceType === 'PLUMBER' ? 'Encanador' : provider.serviceType === 'GARDENER' ? 'Jardineiro' : provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros'}
                                                 </span>
-                                                <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
+                                                <span className="hover-text-white" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -431,6 +445,13 @@ export const BuildingDetails: React.FC<BuildingDetailsProps> = ({ condominiumId,
                     }}
                 />
             )}
+
+            <ItemDetailsModal
+                isOpen={!!selectedItem}
+                onClose={() => { setSelectedItem(null); setItemType(null); }}
+                item={selectedItem}
+                type={itemType}
+            />
         </div>
     );
 };

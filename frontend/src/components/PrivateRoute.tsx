@@ -3,12 +3,14 @@ import { Navigate } from 'react-router-dom';
 import AuthService from '../services/authService';
 
 interface PrivateRouteProps {
-  component: React.ComponentType<any>;
+  component?: React.ComponentType<any>;
+  children?: React.ReactNode;
   [key: string]: any;
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({
   component: Component,
+  children,
   ...rest
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -43,7 +45,15 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  return <Component {...rest} />;
+  if (children) {
+    return <>{children}</>;
+  }
+
+  if (Component) {
+    return <Component {...rest} />;
+  }
+
+  return null;
 };
 
 export default PrivateRoute;

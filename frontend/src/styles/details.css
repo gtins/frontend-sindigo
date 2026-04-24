@@ -152,11 +152,9 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-md);
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.ticket-item:last-child {
-    border-bottom: none;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    background: white;
 }
 
 .ticket-status-badge {
@@ -260,3 +258,14 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Clickable Item Hover Styles */
+.clickable-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+}
+
+.clickable-item:hover {
+    background-color: #f1f5f9 !important; /* Levemente mais escuro que o branco normal */
+}
