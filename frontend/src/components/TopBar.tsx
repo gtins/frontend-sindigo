@@ -25,14 +25,16 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick, onCreateBuildingCli
                     <Building2 size={24} color="#0f172a" />
                 </div>
                 <h1 className="brand-name">Sindigo</h1>
-                <span className="user-greeting">Olá, Gustavo!</span>
+                <span className="user-greeting">Olá! <span style={{fontSize: '0.75rem', marginLeft: '8px', backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold'}}>{localStorage.getItem('role') || 'MORADOR'}</span></span>
             </div>
 
             <div className="top-actions">
-                <button className="secondary-btn" onClick={onCreateBuildingClick}>
-                    <Plus size={16} />
-                    <span>Adicionar prédio</span>
-                </button>
+                {['ADMIN', 'SINDICO'].includes(localStorage.getItem('role') || '') && (
+                    <button className="secondary-btn" onClick={onCreateBuildingClick}>
+                        <Plus size={16} />
+                        <span>Adicionar prédio</span>
+                    </button>
+                )}
                 <div style={{ position: 'relative' }}>
                     <button
                         className="profile-btn"

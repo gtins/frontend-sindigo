@@ -25,29 +25,26 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 <h4 className="sidebar-header">Navegação</h4>
 
                 <nav className="nav-menu">
-                    <a href="#" className="nav-item">
-                        <Calendar className="nav-icon" size={20} />
-                        <span>Calendário</span>
-                    </a>
-
-                    <a href="#" className="nav-item">
-                        <Users className="nav-icon" size={20} />
-                        <span>Contatos</span>
-                    </a>
-
-                    <a href="#" className="nav-item">
-                        <CheckSquare className="nav-icon" size={20} />
-                        <span>Atividades</span>
-                    </a>
-
-                    <a href="#" className="nav-item">
-                        <Wallet className="nav-icon" size={20} />
-                        <span>Finanças</span>
-                    </a>
-
-                    <a href="#" className="nav-item">
+                    <a href="/" className="nav-item">
                         <Hotel className="nav-icon" size={20} />
+                        <span>Prédios</span>
+                    </a>
+
+                    {localStorage.getItem('role') === 'ADMIN' && (
+                        <a href="/admin/acessos" className="nav-item">
+                            <Users className="nav-icon" size={20} />
+                            <span>Acessos</span>
+                        </a>
+                    )}
+
+                    <a href="/reservations" className="nav-item">
+                        <Calendar className="nav-icon" size={20} />
                         <span>Reservas</span>
+                    </a>
+
+                    <a href="/tickets" className="nav-item">
+                        <CheckSquare className="nav-icon" size={20} />
+                        <span>Chamados</span>
                     </a>
                 </nav>
             </div>

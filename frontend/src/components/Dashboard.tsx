@@ -38,10 +38,12 @@ export const Dashboard: React.FC = () => {
                         <Search size={18} />
                         Buscar
                     </button>
-                    <button className="primary-btn" onClick={() => setIsCreateModalOpen?.(true)}>
-                        <Plus size={18} />
-                        Novo prédio
-                    </button>
+                    {['ADMIN', 'SINDICO'].includes(localStorage.getItem('role') || '') && (
+                        <button className="primary-btn" onClick={() => setIsCreateModalOpen?.(true)}>
+                            <Plus size={18} />
+                            Novo prédio
+                        </button>
+                    )}
                 </div>
             </div>
 

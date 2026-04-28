@@ -37,6 +37,9 @@ api.interceptors.response.use(
         console.warn('Token expirado ou inválido. Redirecionando para login...');
         window.location.href = '/login';
       }
+    } else if (error.response && error.response.status === 403) {
+      alert('Você não tem permissão para executar essa ação (Acesso Negado)');
+      // Optional: window.location.href = '/'; 
     }
     return Promise.reject(error);
   }
