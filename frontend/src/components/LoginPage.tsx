@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Building2 } from 'lucide-react';
 import AuthService from '../services/authService';
 import '../styles/login.css';
 
@@ -39,8 +40,13 @@ const LoginPage: React.FC = () => {
   return (
     <div className="login-container">
       <div className="login-box">
-        <h1>Sindigo</h1>
-        <h2>Login</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--space-24)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', marginBottom: 'var(--space-16)' }}>
+            <Building2 size={28} color="var(--color-accent)" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.025em' }}>Sindigo</h1>
+          <h2 style={{ fontSize: '1rem', fontWeight: 500, color: 'var(--text-secondary)', margin: '8px 0 0 0' }}>Acesse sua conta para continuar</h2>
+        </div>
 
         <form onSubmit={handleLogin}>
           <div className="form-group">
@@ -73,8 +79,8 @@ const LoginPage: React.FC = () => {
             {isLoading ? 'Entrando...' : 'Entrar'}
           </button>
           
-          <div style={{ textAlign: 'center', marginTop: '10px' }}>
-            <Link to="/register" style={{ color: '#667eea', textDecoration: 'none', fontSize: '14px', fontWeight: '500' }}>
+          <div style={{ textAlign: 'center', marginTop: 'var(--space-16)' }}>
+            <Link to="/register" style={{ color: 'var(--color-accent)', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 600 }}>
               Não tem uma conta? Cadastre-se
             </Link>
           </div>

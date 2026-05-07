@@ -21,57 +21,94 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick, onCreateBuildingCli
     return (
         <header className="topbar">
             <div className="brand-section" onClick={onHomeClick} style={{ cursor: 'pointer' }}>
-                <div className="brand-logo">
-                    <Building2 size={24} color="#0f172a" />
+                <div className="brand-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--color-accent-light)' }}>
+                    <Building2 size={24} color="var(--color-accent)" strokeWidth={2.5} />
                 </div>
-                <h1 className="brand-name">Sindigo</h1>
-                <span className="user-greeting">Olá! <span style={{fontSize: '0.75rem', marginLeft: '8px', backgroundColor: '#e2e8f0', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold'}}>{localStorage.getItem('role') || 'MORADOR'}</span></span>
+                <h1 className="brand-name" style={{ margin: 0, paddingLeft: '4px' }}>Sindigo</h1>
             </div>
 
             <div className="top-actions">
-                {['ADMIN', 'SINDICO'].includes(localStorage.getItem('role') || '') && (
-                    <button className="secondary-btn" onClick={onCreateBuildingClick}>
-                        <Plus size={16} />
-                        <span>Adicionar prédio</span>
-                    </button>
-                )}
-                <div style={{ position: 'relative' }}>
+
+                <div style={{ position: 'relative', marginLeft: '16px' }}>
                     <button
-                        className="profile-btn"
                         onClick={() => setShowUserMenu(!showUserMenu)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '8px',
+                            transition: 'background-color 0.2s',
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                        <User size={20} />
+                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>Administrador</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.2 }}>{localStorage.getItem('role') === 'ADMIN' ? 'Administrador Geral' : localStorage.getItem('role') || 'Morador'}</span>
+                        </div>
+                        <div style={{ 
+                            width: '40px', 
+                            height: '40px', 
+                            borderRadius: '50%', 
+                            backgroundColor: 'var(--color-accent)', 
+                            color: 'white', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            AD
+                        </div>
                     </button>
+
                     {showUserMenu && (
                         <div style={{
                             position: 'absolute',
-                            top: '100%',
+                            top: 'calc(100% + 8px)',
                             right: 0,
                             backgroundColor: 'white',
-                            border: '1px solid #ddd',
-                            borderRadius: '5px',
-                            marginTop: '5px',
-                            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                            zIndex: 100
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '12px',
+                            boxShadow: 'var(--shadow-lg)',
+                            zIndex: 100,
+                            minWidth: '220px',
+                            overflow: 'hidden'
                         }}>
-                            <button
-                                onClick={handleLogout}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '10px 16px',
-                                    width: '100%',
-                                    border: 'none',
-                                    background: 'none',
-                                    cursor: 'pointer',
-                                    color: '#d32f2f',
-                                    fontSize: '14px'
-                                }}
-                            >
-                                <LogOut size={16} />
-                                Logout
-                            </button>
+                            <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-body)' }}>
+                                <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)' }}>Administrador</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>admin@sindigo.com</div>
+                            </div>
+                            <div style={{ padding: '8px' }}>
+                                <button
+                                    onClick={handleLogout}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        padding: '8px 12px',
+                                        width: '100%',
+                                        border: 'none',
+                                        background: 'transparent',
+                                        cursor: 'pointer',
+                                        color: 'var(--status-red)',
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        borderRadius: '6px',
+                                        transition: 'background-color 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                    <LogOut size={16} />
+                                    Sair da conta
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

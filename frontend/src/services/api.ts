@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AuthService from './authService';
 
 const api = axios.create({
   baseURL: 'http://localhost:8080',
@@ -21,25 +22,55 @@ api.interceptors.request.use(
 );
 
 let isRedirecting = false;
+let isAlerting403 = false;
 
-// Interceptor para capturar erro 401
+// Função auxiliar para verificar se o token expirou localmente
+const isTokenExpired = (token: string | null) => {
+  if (!token) return true;
+  try {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64);
+    const decoded = JSON.parse(decodedJson);
+    const exp = decoded.exp;
+    // Adiciona uma margem de segurança de 5 segundos
+    const now = Date.now() / 1000;
+    return exp < now + 5;
+  } catch (e) {
+    return true; // Se não conseguir parsear, assume expirado
+  }
+};
+
+// Interceptor para capturar erros 401 e 403
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Capturou erro 401: removemos o token local
-      localStorage.removeItem('auth_token');
+    const token = localStorage.getItem('auth_token');
+    const expired = isTokenExpired(token);
+
+    // Se for 401 (Unauthorized) ou 403 (Forbidden mas com token expirado)
+    if (error.response && (error.response.status === 401 || (error.response.status === 403 && expired))) {
+      // Removemos todos os dados locais usando o AuthService
+      AuthService.removeToken();
       
       if (!isRedirecting && window.location.pathname !== '/login') {
         isRedirecting = true;
         console.warn('Token expirado ou inválido. Redirecionando para login...');
         window.location.href = '/login';
       }
-    } else if (error.response && error.response.status === 403) {
-      alert('Você não tem permissão para executar essa ação (Acesso Negado)');
-      // Optional: window.location.href = '/'; 
+    } 
+    // Se for 403 legítimo (falta de permissão de role)
+    else if (error.response && error.response.status === 403) {
+      if (!isAlerting403 && !isRedirecting) {
+        isAlerting403 = true;
+        alert('Você não tem permissão para executar essa ação (Acesso Negado)');
+        
+        // Evita spam de alertas liberando a flag após 3 segundos
+        setTimeout(() => {
+          isAlerting403 = false;
+        }, 3000);
+      }
     }
     return Promise.reject(error);
   }
