@@ -7,7 +7,7 @@ import {
     Hotel,
     ChevronLeft,
     ChevronRight,
-
+    Activity
 } from 'lucide-react';
 import { useState } from 'react';
 import '../styles/dashboard.css'; // We'll add sidebar styles here or in a new file, staying simpler with dashboard.css for now
@@ -30,11 +30,17 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                         <span>Prédios</span>
                     </a>
 
-                    {localStorage.getItem('role') === 'ADMIN' && (
-                        <a href="/admin/acessos" className="nav-item">
-                            <Users className="nav-icon" size={20} />
-                            <span>Acessos</span>
-                        </a>
+                    {localStorage.getItem('role')?.includes('ADMIN') && (
+                        <>
+                            <a href="/admin/acessos" className="nav-item">
+                                <Users className="nav-icon" size={20} />
+                                <span>Acessos</span>
+                            </a>
+                            <a href="/admin/auditoria" className="nav-item">
+                                <Activity className="nav-icon" size={20} />
+                                <span>Auditoria</span>
+                            </a>
+                        </>
                     )}
 
                     <a href="/reservations" className="nav-item">

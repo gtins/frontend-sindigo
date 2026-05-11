@@ -15,7 +15,8 @@ import {
     Wrench,
     BookOpen,
     Check,
-    X
+    X,
+    Users
 } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
 import type { Condominium, Activity, Reservation, Ticket, Provider } from '../types';
@@ -41,6 +42,9 @@ export const BuildingDetails: React.FC = () => {
     const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
     const [isCreateProviderOpen, setIsCreateProviderOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const userRole = localStorage.getItem('role') || 'MORADOR';
+    const isAdminOrSindico = userRole === 'ADMIN' || userRole === 'SINDICO';
 
     const [selectedItem, setSelectedItem] = useState<Activity | Reservation | Ticket | Provider | null>(null);
     const [itemType, setItemType] = useState<'activity' | 'reservation' | 'ticket' | 'provider' | null>(null);
@@ -72,15 +76,11 @@ export const BuildingDetails: React.FC = () => {
     const placeholderUnits = 'Placeholder';
     const placeholderTickets = 'Placeholder';
     const placeholderStatus: 'healthy' | 'attention' | 'warning' = 'healthy';
-    const placeholderTicketsList = [
-        { id: '1', title: 'Chamado Pendente (Placeholder)', status: 'priority', statusLabel: 'Prioridade', meta: 'N/A' }
-    ];
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fetch condomínio
                 const condo = await CondominiumService.getById(condominiumId);
                 setCondominium(condo);
             } catch (err) {
@@ -120,15 +120,17 @@ export const BuildingDetails: React.FC = () => {
                 console.error("Tickets unavailable:", err);
             }
 
-            try {
-                const provs = await CondominiumService.getProviders(condominiumId);
-                let providersData = provs;
-                if (provs && !Array.isArray(provs)) {
-                    providersData = (provs as any).content || (provs as any).data || (provs as any).items || [];
+            if (isAdminOrSindico) {
+                try {
+                    const provs = await CondominiumService.getProviders(condominiumId);
+                    let providersData = provs;
+                    if (provs && !Array.isArray(provs)) {
+                        providersData = (provs as any).content || (provs as any).data || (provs as any).items || [];
+                    }
+                    setProviders(providersData || []);
+                } catch (err) {
+                    console.error("Providers unavailable:", err);
                 }
-                setProviders(providersData || []);
-            } catch (err) {
-                console.error("Providers unavailable:", err);
             }
 
             setLoading(false);
@@ -166,22 +168,32 @@ export const BuildingDetails: React.FC = () => {
                         <StatusBadge status={placeholderStatus} count={0 as any} text={placeholderStatus} />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances`)} style={{ backgroundColor: '#10b981' }}>
-                            <DollarSign size={16} />
-                            Finanças
-                        </button>
-                        <button className="secondary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances-mock`)} style={{ border: '1px solid #1e3a8a', color: '#1e3a8a', backgroundColor: 'transparent' }}>
-                            <DollarSign size={16} />
-                            Finanças (Mock)
-                        </button>
+                        {isAdminOrSindico && (
+                            <>
+                                <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/members`)} style={{ backgroundColor: 'var(--color-primary)' }}>
+                                    <Users size={16} />
+                                    Moradores
+                                </button>
+                                <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances`)} style={{ backgroundColor: '#10b981' }}>
+                                    <DollarSign size={16} />
+                                    Finanças
+                                </button>
+                                <button className="secondary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances-mock`)} style={{ border: '1px solid #1e3a8a', color: '#1e3a8a', backgroundColor: 'transparent' }}>
+                                    <DollarSign size={16} />
+                                    Finanças (Mock)
+                                </button>
+                            </>
+                        )}
                         <button className="map-btn">
                             <MapPin size={16} />
                             Ver no mapa
                         </button>
-                        <button className="primary-btn">
-                            <Edit2 size={16} />
-                            Editar prédio
-                        </button>
+                        {isAdminOrSindico && (
+                            <button className="primary-btn">
+                                <Edit2 size={16} />
+                                Editar prédio
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -208,10 +220,12 @@ export const BuildingDetails: React.FC = () => {
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Atividades recentes</h3>
-                                <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
-                                    <Plus size={16} />
-                                    Registrar atividade
-                                </button>
+                                {isAdminOrSindico && (
+                                    <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
+                                        <Plus size={16} />
+                                        Registrar atividade
+                                    </button>
+                                )}
                             </div>
 
                             <div className="activity-list">
@@ -268,7 +282,7 @@ export const BuildingDetails: React.FC = () => {
                                                 {res.startTime ? new Date(res.startTime).toLocaleString('pt-BR') : ''} - {res.endTime ? new Date(res.endTime).toLocaleString('pt-BR') : ''}
                                                 {res.status && ` (${res.status})`}
                                             </span>
-                                            {res.status === 'PENDING' && (
+                                            {res.status === 'PENDING' && isAdminOrSindico && (
                                                 <div style={{ display: 'flex', gap: '4px' }}>
                                                     <button 
                                                         className="action-btn" 
@@ -368,34 +382,36 @@ export const BuildingDetails: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="section-card">
-                            <div className="section-header">
-                                <h3 className="section-title">Prestadores de Serviço</h3>
-                                <button className="action-btn" onClick={() => setIsCreateProviderOpen(true)} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
-                                    <Plus size={14} style={{ marginRight: '4px' }} /> Novo
-                                </button>
-                            </div>
+                        {isAdminOrSindico && (
+                            <div className="section-card">
+                                <div className="section-header">
+                                    <h3 className="section-title">Prestadores de Serviço</h3>
+                                    <button className="action-btn" onClick={() => setIsCreateProviderOpen(true)} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
+                                        <Plus size={14} style={{ marginRight: '4px' }} /> Novo
+                                    </button>
+                                </div>
 
-                            <div className="contact-list">
-                                {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
-                                {providers.map(provider => (
-                                    <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
-                                                {provider.name.charAt(0)}
-                                            </div>
-                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                <span className="contact-name hover-text-white" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
-                                                <span className="contact-role hover-text-white" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
-                                                     {provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : provider.serviceType === 'PLUMBER' ? 'Encanador' : provider.serviceType === 'GARDENER' ? 'Jardineiro' : provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros'}
-                                                </span>
-                                                <span className="hover-text-white" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
+                                <div className="contact-list">
+                                    {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
+                                    {providers.map(provider => (
+                                        <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
+                                                    {provider.name.charAt(0)}
+                                                </div>
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    <span className="contact-name hover-text-white" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
+                                                    <span className="contact-role hover-text-white" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
+                                                         {provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : provider.serviceType === 'PLUMBER' ? 'Encanador' : provider.serviceType === 'GARDENER' ? 'Jardineiro' : provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros'}
+                                                    </span>
+                                                    <span className="hover-text-white" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -16,6 +16,11 @@ const CondominiumService = {
     return response.data;
   },
 
+  getMyCondominiums: async (): Promise<Condominium[]> => {
+    const response = await api.get('/condominiums/my-condominiums');
+    return response.data;
+  },
+
   getById: async (id: string): Promise<Condominium> => {
     const response = await api.get(`/condominiums/${id}`);
     return response.data;
@@ -24,6 +29,20 @@ const CondominiumService = {
   create: async (payload: CreateCondominiumPayload): Promise<Condominium> => {
     const response = await api.post('/condominiums', payload);
     return response.data;
+  },
+
+  // Members
+  getMembers: async (condominiumId: string): Promise<any[]> => {
+    const response = await api.get(`/condominiums/${condominiumId}/members`);
+    return response.data;
+  },
+
+  addMember: async (condominiumId: string, userId: string): Promise<void> => {
+    await api.post(`/condominiums/${condominiumId}/members/${userId}`);
+  },
+
+  removeMember: async (condominiumId: string, userId: string): Promise<void> => {
+    await api.delete(`/condominiums/${condominiumId}/members/${userId}`);
   },
 
   // Activities

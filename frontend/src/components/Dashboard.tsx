@@ -17,7 +17,31 @@ export const Dashboard: React.FC = () => {
         const fetchCondominiums = async () => {
             setLoading(true);
             try {
-                const data = await CondominiumService.getAll();
+                const role = localStorage.getItem('role') || 'MORADOR';
+                let data = (role === 'ADMIN' || role === 'SINDICO') 
+                    ? await CondominiumService.getAll()
+                    : await CondominiumService.getMyCondominiums();
+
+                // 1. Trata se a API retornou no padrão Pageable do Spring (ex: data.content)
+                if (data && !Array.isArray(data)) {
+                    data = (data as any).content || (data as any).data || (data as any).items || [];
+                }
+
+                // 2. Transforma o DTO de Member no formato esperado pelo Frontend
+                if (Array.isArray(data)) {
+                    data = data.map((item: any) => {
+                        // Se for o DTO que você enviou agora (my-condominiums)
+                        if (item.condominiumId && item.condominiumName) {
+                            return {
+                                ...item,
+                                id: item.condominiumId,    // Garante que o clique leve para a rota certa
+                                name: item.condominiumName // Garante que o nome apareça no card
+                            };
+                        }
+                        return item;
+                    });
+                }
+
                 setCondos(data);
             } catch (err) {
                 console.error('Failed to fetch condominiums:', err);
@@ -38,7 +62,7 @@ export const Dashboard: React.FC = () => {
                         <Search size={18} />
                         Buscar
                     </button>
-                    {['ADMIN', 'SINDICO'].includes(localStorage.getItem('role') || '') && (
+                    {(localStorage.getItem('role')?.includes('ADMIN') || localStorage.getItem('role')?.includes('SINDICO')) && (
                         <button className="primary-btn" onClick={() => setIsCreateModalOpen?.(true)}>
                             <Plus size={18} />
                             Novo prédio

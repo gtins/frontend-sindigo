@@ -12,6 +12,8 @@ import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { CreateCondominiumModal } from './components/CreateCondominiumModal';
 import { AdminUsersPage } from './components/AdminUsersPage';
+import { AdminAuditPage } from './components/AdminAuditPage';
+import { CondominiumMembersPage } from './components/CondominiumMembersPage';
 import './styles/global.css';
 
 function AppLayout() {
@@ -23,18 +25,18 @@ function AppLayout() {
     <div className="dashboard-container">
       <Sidebar />
       <main className="main-content">
-        <TopBar 
-          onHomeClick={() => navigate('/')} 
+        <TopBar
+          onHomeClick={() => navigate('/')}
           onCreateBuildingClick={() => setIsCreateModalOpen(true)}
         />
 
         <Outlet context={{ refreshKey, setIsCreateModalOpen }} />
-        
+
       </main>
 
       {isCreateModalOpen && (
-        <CreateCondominiumModal 
-          onClose={() => setIsCreateModalOpen(false)} 
+        <CreateCondominiumModal
+          onClose={() => setIsCreateModalOpen(false)}
           onSuccess={() => {
             setIsCreateModalOpen(false);
             setRefreshKey(prev => prev + 1);
@@ -55,22 +57,24 @@ function App() {
 
         {/* Rotas protegidas gerais (Layout com Sidebar) */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-            
-            {/* Dashboard: Apenas ADMIN e SINDICO criam condomínios, mas todos podem ver algo se o endpoint permitir */}
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/buildings/:id" element={<BuildingDetails />} />
-            
-            {/* Finanças: Apenas ADMIN e SINDICO */}
-            <Route element={<ProtectedRoute requiredRole={['ADMIN', 'SINDICO']} />}>
-              <Route path="/buildings/:id/finances" element={<BuildingFinancesReal />} />
-              <Route path="/buildings/:id/finances-mock" element={<BuildingFinances data={buildingDetailsData[1]} />} />
-            </Route>
-            
-            {/* Rota Administrativa */}
-            <Route element={<ProtectedRoute requiredRole={['ADMIN']} />}>
-              <Route path="/admin/acessos" element={<AdminUsersPage />} />
-            </Route>
-            
+
+          {/* Dashboard: Apenas ADMIN e SINDICO criam condomínios, mas todos podem ver algo se o endpoint permitir */}
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/buildings/:id" element={<BuildingDetails />} />
+
+          {/* Finanças e Moradores: Apenas ADMIN e SINDICO */}
+          <Route element={<ProtectedRoute requiredRole={['ADMIN', 'SINDICO']} />}>
+            <Route path="/buildings/:id/finances" element={<BuildingFinancesReal />} />
+            <Route path="/buildings/:id/finances-mock" element={<BuildingFinances data={buildingDetailsData[1]} />} />
+            <Route path="/buildings/:id/members" element={<CondominiumMembersPage />} />
+          </Route>
+
+          {/* Rota Administrativa */}
+          <Route element={<ProtectedRoute requiredRole={['ADMIN']} />}>
+            <Route path="/admin/acessos" element={<AdminUsersPage />} />
+            <Route path="/admin/auditoria" element={<AdminAuditPage />} />
+          </Route>
+
         </Route>
 
         {/* Redireciona para dashboard se acessar rota inválida */}

@@ -13,6 +13,7 @@ export interface RegisterCredentials {
 
 interface AuthResponse {
   token: string;
+  refreshToken: string; // Adicionado para a nova arquitetura
   type: string;
   expiresIn: number;
   role?: string;
@@ -36,11 +37,14 @@ interface TokenValidationResponse {
 export class AuthService {
   private static readonly STORAGE_KEY = 'auth_token';
 
+  private static readonly REFRESH_STORAGE_KEY = 'refresh_token';
+
   /**
-   * Armazena o token no localStorage
+   * Armazena os tokens no localStorage
    */
-  static saveToken(token: string): void {
+  static saveTokens(token: string, refreshToken: string): void {
     localStorage.setItem(this.STORAGE_KEY, token);
+    localStorage.setItem(this.REFRESH_STORAGE_KEY, refreshToken);
   }
 
   /**
@@ -51,10 +55,18 @@ export class AuthService {
   }
 
   /**
-   * Remove o token e perfil do localStorage
+   * Recupera o refresh token do localStorage
+   */
+  static getRefreshToken(): string | null {
+    return localStorage.getItem(this.REFRESH_STORAGE_KEY);
+  }
+
+  /**
+   * Remove os tokens e perfil do localStorage
    */
   static removeToken(): void {
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.REFRESH_STORAGE_KEY);
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
   }
@@ -92,7 +104,7 @@ export class AuthService {
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const response = await api.post<AuthResponse>('/auth/login', credentials);
-      this.saveToken(response.data.token);
+      this.saveTokens(response.data.token, response.data.refreshToken);
       
       if (response.data.role) {
         localStorage.setItem('role', response.data.role);
@@ -138,10 +150,41 @@ export class AuthService {
   }
 
   /**
-   * Realiza logout removendo token
+   * Tenta renovar o token usando o refresh token
    */
-  static logout(): void {
-    this.removeToken();
+  static async refreshAuthToken(): Promise<AuthResponse> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) throw new Error('No refresh token available');
+
+    try {
+      // Fazemos a chamada contornando o interceptor usando axios puro ou ignorando auth
+      const response = await api.post<AuthResponse>('/auth/refresh', { refreshToken });
+      
+      this.saveTokens(response.data.token, response.data.refreshToken);
+      return response.data;
+    } catch (error) {
+      this.removeToken();
+      throw error;
+    }
+  }
+
+  /**
+   * Realiza logout adicionando o token na blacklist do backend e limpando local
+   */
+  static async logout(): Promise<void> {
+    try {
+      const token = this.getToken();
+      if (token) {
+        // Envia requisição para a blacklist no backend
+        await api.post('/auth/logout', null, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+    } catch (error) {
+      console.warn('Erro ao avisar backend sobre logout, forçando limpeza local', error);
+    } finally {
+      this.removeToken();
+    }
   }
 }
 

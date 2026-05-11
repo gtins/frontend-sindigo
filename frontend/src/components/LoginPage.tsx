@@ -31,7 +31,11 @@ const LoginPage: React.FC = () => {
       // Token foi salvo automaticamente no localStorage
       navigate('/', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      if (err.response && err.response.status === 429) {
+        setError('Muitas tentativas falhas. Por segurança, aguarde 15 minutos e tente novamente.');
+      } else {
+        setError(err.response?.data?.message || err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      }
     } finally {
       setIsLoading(false);
     }
