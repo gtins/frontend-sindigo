@@ -1,16 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import type { Activity, Reservation, Ticket, Provider } from '../types';
+import CondominiumService from '../services/condominiumService';
 
 interface ItemDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     item: Activity | Reservation | Ticket | Provider | null;
     type: 'activity' | 'reservation' | 'ticket' | 'provider' | null;
+    condominiumId: string;
+    onItemClosed?: () => void;
 }
 
-export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onClose, item, type }) => {
+export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onClose, item, type, condominiumId, onItemClosed }) => {
+    const [isClosing, setIsClosing] = useState(false);
+    const [closeStatus, setCloseStatus] = useState('');
+    const [closingNotes, setClosingNotes] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Reset state when modal opens/closes
+    React.useEffect(() => {
+        if (!isOpen) {
+            setIsClosing(false);
+            setCloseStatus('');
+            setClosingNotes('');
+            setIsSubmitting(false);
+        }
+    }, [isOpen]);
+
+    const userRole = localStorage.getItem('role') || 'MORADOR';
+    const isAdminOrSindico = userRole === 'ADMIN' || userRole === 'SINDICO';
+
     if (!isOpen || !item || !type) return null;
+
+    const handleCloseSubmit = async () => {
+        if (!closeStatus || !closingNotes.trim()) {
+            alert('Por favor, preencha o status e as notas de encerramento.');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            if (type === 'activity') {
+                await CondominiumService.closeActivity(condominiumId, item.id, {
+                    status: closeStatus as 'COMPLETED' | 'CANCELLED',
+                    closingNotes: closingNotes.trim()
+                });
+            } else if (type === 'ticket') {
+                await CondominiumService.closeTicket(condominiumId, item.id, {
+                    status: closeStatus as 'RESOLVIDO' | 'FECHADO',
+                    closingNotes: closingNotes.trim()
+                });
+            }
+            alert('Item encerrado com sucesso!');
+            setIsClosing(false);
+            if (onItemClosed) onItemClosed();
+            onClose();
+        } catch (error) {
+            console.error('Failed to close item:', error);
+            alert('Erro ao tentar encerrar o item. Tente novamente.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     let title = '';
     let content: React.ReactNode = null;
@@ -34,6 +86,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                 {renderRow('Data de Início', activity.startDate)}
                 {renderRow('Data de Fim', activity.endDate)}
                 {activity.status && renderRow('Status', activity.status)}
+                {activity.closedAt && renderRow('Data de Encerramento', new Date(activity.closedAt).toLocaleString('pt-BR'))}
+                {activity.closingNotes && renderRow('Notas de Encerramento', activity.closingNotes)}
             </div>
         );
     } else if (type === 'reservation') {
@@ -59,6 +113,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                 {renderRow('Status', ticket.status)}
                 {renderRow('Prioridade', ticket.priority)}
                 {renderRow('Categoria', ticket.category)}
+                {ticket.closedAt && renderRow('Data de Encerramento', new Date(ticket.closedAt).toLocaleString('pt-BR'))}
+                {ticket.closingNotes && renderRow('Notas de Encerramento', ticket.closingNotes)}
             </div>
         );
     } else if (type === 'provider') {
@@ -86,9 +142,54 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                 
                 <div style={contentStyle}>
                     {content}
+                    
+                    {isClosing && (
+                        <div style={closeFormStyle}>
+                            <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: '12px' }}>Encerrar {type === 'ticket' ? 'Chamado' : 'Atividade'}</h3>
+                            
+                            <label style={labelStyle}>Status de Encerramento *</label>
+                            <select 
+                                value={closeStatus} 
+                                onChange={(e) => setCloseStatus(e.target.value)}
+                                style={inputStyle}
+                            >
+                                <option value="">Selecione um status...</option>
+                                {type === 'ticket' ? (
+                                    <>
+                                        <option value="RESOLVIDO">Resolvido</option>
+                                        <option value="FECHADO">Fechado</option>
+                                    </>
+                                ) : (
+                                    <>
+                                        <option value="COMPLETED">Concluída</option>
+                                        <option value="CANCELLED">Cancelada</option>
+                                    </>
+                                )}
+                            </select>
+
+                            <label style={labelStyle}>Notas de Encerramento *</label>
+                            <textarea 
+                                value={closingNotes} 
+                                onChange={(e) => setClosingNotes(e.target.value)}
+                                style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+                                placeholder="Descreva os detalhes do encerramento..."
+                            />
+
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                                <button onClick={() => setIsClosing(false)} style={cancelBtnStyle} disabled={isSubmitting}>Cancelar</button>
+                                <button onClick={handleCloseSubmit} style={submitBtnStyle} disabled={isSubmitting}>
+                                    {isSubmitting ? 'Enviando...' : 'Confirmar'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 
                 <div style={footerStyle}>
+                    {isAdminOrSindico && (type === 'activity' || type === 'ticket') && !isClosing && 
+                     !['COMPLETED', 'CANCELLED', 'RESOLVED', 'CLOSED', 'RESOLVIDO', 'FECHADO'].includes((item as any).status) && (
+                        <button onClick={() => setIsClosing(true)} style={closeItemBtnStyle}>Encerrar</button>
+                    )}
                     <button onClick={onClose} style={closeActionBtnStyle}>Fechar</button>
                 </div>
             </div>
@@ -154,6 +255,64 @@ const closeActionBtnStyle: React.CSSProperties = {
     borderRadius: '6px',
     border: 'none',
     backgroundColor: '#3b82f6',
+    color: '#fff',
+    fontWeight: 500,
+    cursor: 'pointer'
+};
+
+const closeItemBtnStyle: React.CSSProperties = {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: '1px solid #ef4444',
+    backgroundColor: 'transparent',
+    color: '#ef4444',
+    fontWeight: 500,
+    cursor: 'pointer',
+    marginRight: 'auto'
+};
+
+const closeFormStyle: React.CSSProperties = {
+    marginTop: '20px',
+    padding: '16px',
+    backgroundColor: '#f8fafc',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
+};
+
+const labelStyle: React.CSSProperties = {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    color: '#475569',
+    marginBottom: '4px'
+};
+
+const inputStyle: React.CSSProperties = {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #cbd5e1',
+    fontSize: '0.875rem',
+    width: '100%',
+    boxSizing: 'border-box'
+};
+
+const cancelBtnStyle: React.CSSProperties = {
+    padding: '6px 12px',
+    borderRadius: '6px',
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#fff',
+    color: '#475569',
+    fontWeight: 500,
+    cursor: 'pointer'
+};
+
+const submitBtnStyle: React.CSSProperties = {
+    padding: '6px 12px',
+    borderRadius: '6px',
+    border: 'none',
+    backgroundColor: '#10b981',
     color: '#fff',
     fontWeight: 500,
     cursor: 'pointer'

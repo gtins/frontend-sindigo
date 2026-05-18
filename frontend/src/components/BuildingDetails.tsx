@@ -41,6 +41,9 @@ export const BuildingDetails: React.FC = () => {
     const [isCreateReservationOpen, setIsCreateReservationOpen] = useState(false);
     const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
     const [isCreateProviderOpen, setIsCreateProviderOpen] = useState(false);
+    const [isEditingMap, setIsEditingMap] = useState(false);
+    const [customMapQuery, setCustomMapQuery] = useState('');
+    const [activityFilter, setActivityFilter] = useState<'all' | 'open' | 'closed'>('open');
     const [refreshKey, setRefreshKey] = useState(0);
 
     const userRole = localStorage.getItem('role') || 'MORADOR';
@@ -73,9 +76,18 @@ export const BuildingDetails: React.FC = () => {
     };
 
     // Placeholders
+    const openTicketsCount = tickets.filter(t => ['OPEN', 'ABERTO'].includes(t.status)).length;
     const placeholderUnits = 'Placeholder';
-    const placeholderTickets = 'Placeholder';
-    const placeholderStatus: 'healthy' | 'attention' | 'warning' = 'healthy';
+    const placeholderStatus: 'healthy' | 'attention' | 'warning' = openTicketsCount === 0 ? 'healthy' : openTicketsCount > 5 ? 'warning' : 'attention';
+
+    const nextPeriodicActivity = activities
+        .filter(a => a.type === 'PERIODIC' && !['CLOSED', 'COMPLETED', 'CANCELLED', 'RESOLVIDO', 'FECHADO'].includes(a.status || ''))
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .find(a => new Date(a.startDate).getTime() >= new Date().setHours(0,0,0,0));
+    
+    const nextInspectionDisplay = nextPeriodicActivity 
+        ? new Date(nextPeriodicActivity.startDate).toLocaleDateString('pt-BR') 
+        : 'N/A';
 
     useEffect(() => {
         const fetchData = async () => {
@@ -115,7 +127,8 @@ export const BuildingDetails: React.FC = () => {
                 if (tkts && !Array.isArray(tkts)) {
                     ticketsData = (tkts as any).content || (tkts as any).data || (tkts as any).items || [];
                 }
-                setTickets(ticketsData || []);
+                const openTicketsList = (ticketsData || []).filter((t: any) => !['CLOSED', 'RESOLVED', 'FECHADO', 'RESOLVIDO', 'CANCELADO'].includes(t.status));
+                setTickets(openTicketsList);
             } catch (err) {
                 console.error("Tickets unavailable:", err);
             }
@@ -150,6 +163,16 @@ export const BuildingDetails: React.FC = () => {
         return <div className="dashboard-container"><div className="content-wrapper"><p>Condomínio não encontrado.</p></div></div>;
     }
 
+    const savedQuery = localStorage.getItem(`map_query_${condominiumId}`);
+    const mapAddress = savedQuery || condominium.address || '';
+
+    const filteredActivities = activities.filter(a => {
+        const isClosed = ['CLOSED', 'COMPLETED', 'CANCELLED', 'RESOLVIDO', 'FECHADO'].includes(a.status || '');
+        if (activityFilter === 'open') return !isClosed;
+        if (activityFilter === 'closed') return isClosed;
+        return true;
+    });
+
     return (
         <div className="dashboard-container">
             <div className="content-wrapper">
@@ -165,7 +188,7 @@ export const BuildingDetails: React.FC = () => {
                     <div className="building-title-section">
                         <BuildingIcon size={24} />
                         <h1 className="building-title">{condominium.name}</h1>
-                        <StatusBadge status={placeholderStatus} count={0 as any} text={placeholderStatus} />
+                        <StatusBadge status={placeholderStatus} count={openTicketsCount as any} text={placeholderStatus === 'healthy' ? 'Saudável' : placeholderStatus === 'attention' ? 'Atenção' : 'Crítico'} />
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         {isAdminOrSindico && (
@@ -184,10 +207,6 @@ export const BuildingDetails: React.FC = () => {
                                 </button>
                             </>
                         )}
-                        <button className="map-btn">
-                            <MapPin size={16} />
-                            Ver no mapa
-                        </button>
                         {isAdminOrSindico && (
                             <button className="primary-btn">
                                 <Edit2 size={16} />
@@ -208,7 +227,7 @@ export const BuildingDetails: React.FC = () => {
                     </div>
                     <div className="stat-card">
                         <span className="stat-key">Chamados abertos</span>
-                        <span className="stat-val">{placeholderTickets}</span>
+                        <span className="stat-val">{openTicketsCount}</span>
                     </div>
                 </div>
 
@@ -220,17 +239,29 @@ export const BuildingDetails: React.FC = () => {
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Atividades recentes</h3>
-                                {isAdminOrSindico && (
-                                    <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
-                                        <Plus size={16} />
-                                        Registrar atividade
-                                    </button>
-                                )}
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <select 
+                                        value={activityFilter} 
+                                        onChange={(e) => setActivityFilter(e.target.value as any)}
+                                        className="action-btn"
+                                        style={{ outline: 'none', paddingRight: '32px' }}
+                                    >
+                                        <option value="all">Todas</option>
+                                        <option value="open">Abertas</option>
+                                        <option value="closed">Fechadas</option>
+                                    </select>
+                                    {isAdminOrSindico && (
+                                        <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
+                                            <Plus size={16} />
+                                            Registrar atividade
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="activity-list">
-                                {(!Array.isArray(activities) || activities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
-                                {Array.isArray(activities) && activities.map(activity => (
+                                {(!Array.isArray(filteredActivities) || filteredActivities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
+                                {Array.isArray(filteredActivities) && filteredActivities.map(activity => (
                                     <div key={activity.id} className="activity-item clickable-item" onClick={() => handleItemClick(activity, 'activity')}>
                                         <div className="activity-icon hover-icon-white">
                                             {activity.type === 'ONCE' && <Calendar size={20} color="#64748b" />}
@@ -349,15 +380,57 @@ export const BuildingDetails: React.FC = () => {
                     <div className="details-right">
                         <div className="section-card">
                             <div className="section-header" style={{ marginBottom: '1rem' }}>
-                                <h3 className="section-title">Em destaque (Placeholder)</h3>
-                                <div className="legend" style={{ marginBottom: 0, fontSize: '0.75rem' }}>
-                                    <div className="legend-item"><span className="dot green"></span> Saudável</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <MapPin size={20} color="#64748b" />
+                                    <h3 className="section-title" style={{ margin: 0 }}>Localização</h3>
                                 </div>
+                                {isAdminOrSindico && (
+                                    <button className="action-btn" onClick={() => {
+                                        setCustomMapQuery(mapAddress);
+                                        setIsEditingMap(true);
+                                    }} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
+                                        <Edit2 size={14} style={{ marginRight: '4px' }} /> Editar
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="map-placeholder">
-                                {/* Image would go here, using CSS bg for now */}
-                            </div>
+                            {isEditingMap ? (
+                                <div style={{ marginBottom: '16px', display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                                    <input 
+                                        type="text" 
+                                        value={customMapQuery} 
+                                        onChange={(e) => setCustomMapQuery(e.target.value)}
+                                        placeholder="Digite o endereço completo"
+                                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                    />
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button className="primary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => {
+                                            localStorage.setItem(`map_query_${condominiumId}`, customMapQuery);
+                                            setIsEditingMap(false);
+                                        }}>Salvar</button>
+                                        <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setIsEditingMap(false)}>Cancelar</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="map-container" style={{ width: '100%', height: '220px', backgroundColor: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+                                    {mapAddress ? (
+                                        <iframe 
+                                            width="100%" 
+                                            height="100%" 
+                                            frameBorder="0" 
+                                            scrolling="no" 
+                                            marginHeight={0} 
+                                            marginWidth={0} 
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(mapAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                        ></iframe>
+                                    ) : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b' }}>
+                                            <MapPin size={32} style={{ marginBottom: '8px' }} />
+                                            <p style={{ fontSize: '0.875rem' }}>Nenhum endereço informado</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="compliance-row">
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -371,14 +444,16 @@ export const BuildingDetails: React.FC = () => {
                                     <AlertCircle size={18} />
                                     <span>Chamados abertos</span>
                                 </div>
-                                <span className="badge-count">Placeholder</span>
+                                <span className="badge-count">{openTicketsCount}</span>
                             </div>
                             <div className="compliance-row" style={{ borderBottom: 'none' }}>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <Calendar size={18} />
                                     <span>Próxima inspeção</span>
                                 </div>
-                                <span className="compliance-tag" style={{ background: '#fbbf24', color: '#78350f' }}>Placeholder</span>
+                                <span className="compliance-tag" style={{ background: nextPeriodicActivity ? '#fbbf24' : '#e2e8f0', color: nextPeriodicActivity ? '#78350f' : '#64748b' }}>
+                                    {nextInspectionDisplay}
+                                </span>
                             </div>
                         </div>
 
@@ -467,6 +542,12 @@ export const BuildingDetails: React.FC = () => {
                 onClose={() => { setSelectedItem(null); setItemType(null); }}
                 item={selectedItem}
                 type={itemType}
+                condominiumId={condominiumId}
+                onItemClosed={() => {
+                    setSelectedItem(null);
+                    setItemType(null);
+                    setRefreshKey(prev => prev + 1);
+                }}
             />
         </div>
     );

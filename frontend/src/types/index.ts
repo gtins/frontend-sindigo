@@ -16,6 +16,9 @@ export interface Activity {
   type: string; // 'PERIODIC', etc.
   startDate: string;
   endDate: string;
+  status?: string;
+  closedAt?: string;
+  closingNotes?: string;
 }
 
 export interface CreateActivityPayload {
@@ -99,9 +102,11 @@ export interface Ticket {
   description: string;
   category: string;
   priority: 'ALTA' | 'BAIXA' | 'MEDIA' | 'CRITICA' | 'URGENTE';
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVIDO' | 'FECHADO' | 'ABERTO' | 'EM_EXECUCAO' | 'CANCELADO' | 'EM_ANALISE' | 'PLANEJADO' | 'AGUARDANDO' | 'CLOSED';
   location: string;
   createdAt?: string;
+  closedAt?: string;
+  closingNotes?: string;
 }
 
 export interface CreateTicketPayload {
@@ -110,4 +115,14 @@ export interface CreateTicketPayload {
   category: string;
   priority: 'ALTA' | 'BAIXA' | 'MEDIA' | 'CRITICA' | 'URGENTE';
   location: string;
+}
+
+export interface CloseTicketPayload {
+  status: 'RESOLVIDO' | 'FECHADO';
+  closingNotes: string;
+}
+
+export interface CloseActivityPayload {
+  status: 'COMPLETED' | 'CANCELLED';
+  closingNotes: string;
 }

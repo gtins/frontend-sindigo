@@ -6,7 +6,9 @@ import type {
   CreateActivityPayload,
   Reservation,
   CreateReservationPayload,
-  ReservationApprovalPayload
+  ReservationApprovalPayload,
+  CloseActivityPayload,
+  CloseTicketPayload
 } from '../types';
 
 const CondominiumService = {
@@ -53,6 +55,11 @@ const CondominiumService = {
 
   createActivity: async (condominiumId: string, payload: CreateActivityPayload): Promise<Activity> => {
     const response = await api.post(`/condominiums/${condominiumId}/activities`, payload);
+    return response.data;
+  },
+
+  closeActivity: async (condominiumId: string, activityId: string, payload: CloseActivityPayload): Promise<Activity> => {
+    const response = await api.post(`/condominiums/${condominiumId}/activities/${activityId}/close`, payload);
     return response.data;
   },
 
@@ -136,6 +143,11 @@ const CondominiumService = {
 
   deleteTicket: async (condominiumId: string, ticketId: string): Promise<void> => {
     await api.delete(`/condominiums/${condominiumId}/tickets/${ticketId}`);
+  },
+
+  closeTicket: async (condominiumId: string, ticketId: string, payload: CloseTicketPayload): Promise<any> => {
+    const response = await api.post(`/condominiums/${condominiumId}/tickets/${ticketId}/close`, payload);
+    return response.data;
   }
 };
 

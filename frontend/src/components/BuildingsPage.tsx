@@ -6,11 +6,12 @@ import CondominiumService from '../services/condominiumService';
 import type { Condominium } from '../types';
 import '../styles/dashboard.css';
 
-export const Dashboard: React.FC = () => {
+export const BuildingsPage: React.FC = () => {
     const navigate = useNavigate();
     const { refreshKey = 0, setIsCreateModalOpen } = useOutletContext<{ refreshKey: number, setIsCreateModalOpen: (open: boolean) => void }>() || {};
 
     const [condos, setCondos] = useState<Condominium[]>([]);
+    const [ticketsMap, setTicketsMap] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -43,6 +44,31 @@ export const Dashboard: React.FC = () => {
                 }
 
                 setCondos(data);
+
+                // Fetch tickets count for each condo
+                const ticketsResults = await Promise.all(data.map(async (condo: Condominium) => {
+                    try {
+                        let tktData = await CondominiumService.getTickets(condo.id as string);
+                        if (tktData && !Array.isArray(tktData)) {
+                            tktData = (tktData as any).content || [];
+                        }
+                        return { 
+                            condoId: condo.id as string, 
+                            count: (tktData || []).filter((t: any) => ['OPEN', 'ABERTO'].includes(t.status)).length 
+                        };
+                    } catch (err) {
+                        console.error(`Failed to fetch tickets for condo ${condo.id}`, err);
+                        return { condoId: condo.id as string, count: 0 };
+                    }
+                }));
+
+                const newTicketsMap = ticketsResults.reduce((acc, curr) => {
+                    acc[curr.condoId] = curr.count;
+                    return acc;
+                }, {} as Record<string, number>);
+                
+                setTicketsMap(newTicketsMap);
+
             } catch (err) {
                 console.error('Failed to fetch condominiums:', err);
             } finally {
@@ -113,20 +139,24 @@ export const Dashboard: React.FC = () => {
                 ) : condos.length === 0 ? (
                     <p>Nenhum condomínio encontrado.</p>
                 ) : (
-                    condos.map((building) => (
-                        <BuildingCard
-                            key={building.id}
-                            data={{
-                                id: building.id as any, // Cast to any to reuse mock props temporarily
-                                name: building.name,
-                                units: 0, // Placeholder
-                                tickets: 0, // Placeholder
-                                lastUpdate: 'Agora', // Placeholder
-                                status: 'healthy', // Placeholder
-                            }}
-                            onClick={() => navigate(`/buildings/${building.id}`)}
-                        />
-                    ))
+                    condos.map((building) => {
+                        const openTickets = ticketsMap[building.id as string] || 0;
+                        const status = openTickets === 0 ? 'healthy' : openTickets > 5 ? 'warning' : 'attention';
+                        return (
+                            <BuildingCard
+                                key={building.id}
+                                data={{
+                                    id: building.id as any,
+                                    name: building.name,
+                                    units: 0, // Placeholder
+                                    tickets: openTickets,
+                                    lastUpdate: 'Agora', // Placeholder
+                                    status: status,
+                                }}
+                                onClick={() => navigate(`/buildings/${building.id}`)}
+                            />
+                        );
+                    })
                 )}
             </div>
         </div>

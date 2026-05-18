@@ -3,7 +3,10 @@ import { useState } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
-import { Dashboard } from './components/Dashboard';
+import { BuildingsPage } from './components/BuildingsPage';
+import { GlobalDashboardPage } from './components/GlobalDashboardPage';
+import { GlobalCalendarPage } from './components/GlobalCalendarPage';
+import { GlobalTicketsPage } from './components/GlobalTicketsPage';
 import { BuildingDetails } from './components/BuildingDetails';
 import { BuildingFinances } from './components/BuildingFinances';
 import { BuildingFinancesReal } from './components/BuildingFinancesReal';
@@ -58,8 +61,12 @@ function App() {
         {/* Rotas protegidas gerais (Layout com Sidebar) */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
 
-          {/* Dashboard: Apenas ADMIN e SINDICO criam condomínios, mas todos podem ver algo se o endpoint permitir */}
-          <Route path="/" element={<Dashboard />} />
+          {/* Global Pages */}
+          <Route path="/" element={<GlobalDashboardPage />} />
+          <Route path="/buildings" element={<BuildingsPage />} />
+          <Route path="/calendar" element={<GlobalCalendarPage />} />
+          <Route path="/tickets" element={<GlobalTicketsPage />} />
+
           <Route path="/buildings/:id" element={<BuildingDetails />} />
 
           {/* Finanças e Moradores: Apenas ADMIN e SINDICO */}

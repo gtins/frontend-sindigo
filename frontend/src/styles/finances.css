@@ -79,13 +79,13 @@
 }
 
 .finance-stat-card:nth-child(2) {
-    background: #f0fdf4;
-    border-color: #dcfce7;
+    background: #fef2f2;
+    border-color: #fee2e2;
 }
 
 .finance-stat-card:nth-child(3) {
-    background: #fef2f2;
-    border-color: #fee2e2;
+    background: #fff7ed;
+    border-color: #ffedd5;
 }
 
 .finance-stat-card:nth-child(4) {

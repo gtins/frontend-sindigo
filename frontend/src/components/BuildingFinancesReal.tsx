@@ -14,6 +14,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import CondominiumService from '../services/condominiumService';
 import { CreateFinancialEntryModal } from './CreateFinancialEntryModal';
+import { ExportFinancialModal } from './ExportFinancialModal';
 import { TransactionChartModal } from './TransactionChartModal';
 import type { Condominium, FinancialEntry, Balance } from '../types';
 import '../styles/details.css';
@@ -27,6 +28,7 @@ export const BuildingFinancesReal: React.FC = () => {
     const [balance, setBalance] = useState<Balance | null>(null);
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [selectedChartType, setSelectedChartType] = useState<'INCOME' | 'EXPENSE' | null>(null);
     const [filterType, setFilterType] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
     const [refreshKey, setRefreshKey] = useState(0);
@@ -128,7 +130,7 @@ export const BuildingFinancesReal: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="secondary-btn" style={{ background: 'white', border: '1px solid #e2e8f0' }}>
+                        <button className="secondary-btn" style={{ background: 'white', border: '1px solid #e2e8f0' }} onClick={() => setIsExportModalOpen(true)}>
                             <Download size={16} />
                             Exportar (CSV)
                         </button>
@@ -318,6 +320,13 @@ export const BuildingFinancesReal: React.FC = () => {
                         setIsCreateModalOpen(false);
                         setRefreshKey(prev => prev + 1);
                     }}
+                />
+            )}
+
+            {isExportModalOpen && (
+                <ExportFinancialModal
+                    condominiumId={condominiumId}
+                    onClose={() => setIsExportModalOpen(false)}
                 />
             )}
             
