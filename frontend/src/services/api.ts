@@ -2,7 +2,7 @@ import axios from 'axios';
 import AuthService from './authService';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
 });
 
 // Interceptor para inserir token automaticamente no header Authorization
@@ -24,7 +24,7 @@ api.interceptors.request.use(
 let isRedirecting = false;
 let isAlerting403 = false;
 let isRefreshing = false;
-let failedQueue: Array<{resolve: (value?: unknown) => void, reject: (reason?: any) => void}> = [];
+let failedQueue: Array<{ resolve: (value?: unknown) => void, reject: (reason?: any) => void }> = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach(prom => {
@@ -48,7 +48,7 @@ const isTokenExpired = (token: string | null) => {
     const now = Date.now() / 1000;
     return exp < now + 5;
   } catch (e) {
-    return true; 
+    return true;
   }
 };
 
@@ -77,16 +77,16 @@ api.interceptors.response.use(
           try {
             const authResponse = await AuthService.refreshAuthToken();
             const newToken = authResponse.token;
-            
+
             processQueue(null, newToken);
             isRefreshing = false;
-            
+
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             return api(originalRequest);
           } catch (refreshError) {
             processQueue(refreshError, null);
             isRefreshing = false;
-            
+
             AuthService.removeToken();
             if (!isRedirecting && window.location.pathname !== '/login') {
               isRedirecting = true;
@@ -107,7 +107,7 @@ api.interceptors.response.use(
           });
         }
       }
-    } 
+    }
     // Se for 403 legítimo (falta de permissão de role)
     else if (error.response && error.response.status === 403) {
       // Ignorar alerta no logout e em requisições GET (leitura não deve travar a tela)
@@ -115,7 +115,7 @@ api.interceptors.response.use(
         if (!isAlerting403 && !isRedirecting) {
           isAlerting403 = true;
           alert('Você não tem permissão para executar essa ação (Acesso Negado)');
-          
+
           setTimeout(() => {
             isAlerting403 = false;
           }, 3000);
