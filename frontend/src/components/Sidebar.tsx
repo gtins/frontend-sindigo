@@ -3,7 +3,6 @@ import {
     Calendar,
     Users,
     CheckSquare,
-    Wallet,
     Hotel,
     ChevronLeft,
     ChevronRight,

@@ -30,7 +30,12 @@ export const CreateFinanceEntryModal: React.FC<CreateFinanceEntryModalProps> = (
         }
 
         try {
-            const payload: CreateFinancialEntryPayload = { description, amount: numericAmount, type };
+            const payload: CreateFinancialEntryPayload = { 
+                description, 
+                amount: numericAmount, 
+                type, 
+                date: new Date().toISOString().split('T')[0] 
+            };
             await CondominiumService.createFinancialEntry(condominiumId, payload);
             onSuccess();
         } catch (err: any) {

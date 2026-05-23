@@ -21,7 +21,8 @@ import '../styles/details.css';
 import '../styles/finances.css';
 
 export const BuildingFinancesReal: React.FC = () => {
-    const { id: condominiumId } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
+    const condominiumId = id!;
     const navigate = useNavigate();
     const [condominium, setCondominium] = useState<Condominium | null>(null);
     const [entries, setEntries] = useState<FinancialEntry[]>([]);
@@ -92,8 +93,6 @@ export const BuildingFinancesReal: React.FC = () => {
     }
 
     const safeBalance = balance ? (typeof balance.balance === 'number' && !isNaN(balance.balance) ? balance.balance : balance.totalIncome - balance.totalExpense) : 0;
-    const netBalanceColor = safeBalance >= 0 ? 'text-green' : 'text-red';
-    const isNetBalancePositive = safeBalance >= 0;
 
     const currentPeriod = new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).replace('.', '').replace(' de ', ' ');
     

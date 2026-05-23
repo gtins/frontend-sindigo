@@ -41,7 +41,6 @@ export const CondominiumMembersPage: React.FC = () => {
   
   // Add Member search
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   

@@ -19,7 +19,7 @@ export const TransactionChartModal: React.FC<TransactionChartModalProps> = ({ ty
         
         const groupedByISO: Record<string, number> = {};
         for(const entry of filtered) {
-            const rawDateStr = new Date(entry.date).toISOString().split('T')[0];
+            const rawDateStr = new Date(entry.date!).toISOString().split('T')[0];
             groupedByISO[rawDateStr] = (groupedByISO[rawDateStr] || 0) + entry.amount;
         }
         

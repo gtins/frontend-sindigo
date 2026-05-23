@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../services/authService';

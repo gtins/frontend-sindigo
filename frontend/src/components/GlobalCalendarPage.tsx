@@ -6,7 +6,6 @@ import { ItemDetailsModal } from './ItemDetailsModal';
 import '../styles/dashboard.css';
 
 export const GlobalCalendarPage: React.FC = () => {
-    const [condos, setCondos] = useState<Condominium[]>([]);
     const [activities, setActivities] = useState<(Activity & { condominiumName: string })[]>([]);
     const [tickets, setTickets] = useState<(Ticket & { condominiumName: string })[]>([]);
     const [loading, setLoading] = useState(true);
@@ -35,7 +34,7 @@ export const GlobalCalendarPage: React.FC = () => {
                     name: item.condominiumName || item.name
                 }));
                 
-                setCondos(parsedCondos);
+
 
                 const activitiesResults = await Promise.all(parsedCondos.map(async (condo: Condominium) => {
                     try {

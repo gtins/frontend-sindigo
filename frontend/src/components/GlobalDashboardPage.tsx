@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Calendar, AlertCircle, Clock, CheckCircle } from 'lucide-react';
+import { LayoutDashboard, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CondominiumService from '../services/condominiumService';
 import type { Condominium, Activity, Ticket } from '../types';

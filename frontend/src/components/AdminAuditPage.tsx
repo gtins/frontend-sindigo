@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Search, Filter, Eye, Activity, Calendar, Globe, Server } from 'lucide-react';
+import { Shield, Filter, Eye, Activity, Calendar, Globe, Server } from 'lucide-react';
 import api from '../services/api';
 import '../styles/dashboard.css';
 

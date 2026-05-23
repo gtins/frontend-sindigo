@@ -11,8 +11,6 @@ import {
     Calendar,
     ChevronRight,
     DollarSign,
-    ClipboardCheck,
-    Wrench,
     BookOpen,
     Check,
     X,
@@ -29,7 +27,8 @@ import { ItemDetailsModal } from './ItemDetailsModal';
 import '../styles/details.css';
 
 export const BuildingDetails: React.FC = () => {
-    const { id: condominiumId } = useParams<{ id: string }>();
+    const { id } = useParams<{ id: string }>();
+    const condominiumId = id!;
     const navigate = useNavigate();
     const [condominium, setCondominium] = useState<Condominium | null>(null);
     const [activities, setActivities] = useState<Activity[]>([]);

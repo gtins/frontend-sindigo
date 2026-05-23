@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
-import type { CreateActivityPayload, Ticket } from '../types';
+import type { CreateActivityPayload, Ticket, Provider } from '../types';
 
 interface CreateActivityModalProps {
     condominiumId: string;
