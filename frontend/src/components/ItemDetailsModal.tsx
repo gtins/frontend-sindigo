@@ -80,7 +80,11 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
             setLoadingActivities(true);
             try {
                 const activities = await CondominiumService.getActivities(condominiumId);
-                const linkedActivities = activities.filter((act: any) => 
+                let activitiesData = activities;
+                if (activities && !Array.isArray(activities)) {
+                    activitiesData = (activities as any).content || (activities as any).data || (activities as any).items || [];
+                }
+                const linkedActivities = (activitiesData || []).filter((act: any) => 
                     act.providerId === item.id || 
                     act.provider?.id === item.id
                 );
@@ -88,12 +92,15 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
 
                 const attachmentsMap: Record<string, Attachment[]> = {};
                 for (const act of linkedActivities) {
-                    try {
-                        const res = await AttachmentService.getActivityAttachments(act.id);
-                        attachmentsMap[act.id] = res || [];
-                    } catch (e) {
-                        console.error('Failed to load attachments for activity:', act.id, e);
-                        attachmentsMap[act.id] = [];
+                    const actId = act.id || act.activityId;
+                    if (actId) {
+                        try {
+                            const res = await AttachmentService.getActivityAttachments(actId);
+                            attachmentsMap[actId] = res || [];
+                        } catch (e) {
+                            console.error('Failed to load attachments for activity:', actId, e);
+                            attachmentsMap[actId] = [];
+                        }
                     }
                 }
                 setActivityAttachments(attachmentsMap);
@@ -186,7 +193,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
         setIsSubmitting(true);
         try {
             if (type === 'activity') {
-                await CondominiumService.closeActivity(condominiumId, item.id, {
+                const actId = item.id || (item as any).activityId;
+                await CondominiumService.closeActivity(condominiumId, actId, {
                     status: closeStatus as 'COMPLETED' | 'CANCELLED',
                     closingNotes: closingNotes.trim()
                 });
@@ -346,11 +354,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {providerActivities.map(act => {
-                                const attachments = activityAttachments[act.id] || [];
+                                const actId = act.id || act.activityId;
+                                const attachments = activityAttachments[actId] || [];
                                 const invoice = attachments.find(att => att.contentType === 'application/pdf' || att.name.toLowerCase().endsWith('.pdf'));
                                 
                                 return (
-                                    <div key={act.id} style={{ 
+                                    <div key={actId} style={{ 
                                         padding: '12px', 
                                         border: '1px solid #e2e8f0', 
                                         borderRadius: '8px', 
@@ -387,7 +396,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                             minHeight: '36px'
                                         }}>
                                             <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>Nota Fiscal:</span>
-                                            {uploadingActivityId === act.id ? (
+                                            {uploadingActivityId === actId ? (
                                                 <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Enviando PDF...</span>
                                             ) : invoice ? (
                                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -395,7 +404,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                                         📄 {invoice.name}
                                                     </span>
                                                     <button 
-                                                        onClick={() => handleDeleteActivityInvoice(act.id, invoice.id)}
+                                                        onClick={() => handleDeleteActivityInvoice(actId, invoice.id)}
                                                         style={{ 
                                                             background: 'none', 
                                                             border: 'none', 
@@ -425,7 +434,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                                             accept=".pdf" 
                                                             onChange={(e) => {
                                                                 if (e.target.files && e.target.files[0]) {
-                                                                    handleUploadActivityInvoice(act.id, e.target.files[0]);
+                                                                    handleUploadActivityInvoice(actId, e.target.files[0]);
                                                                 }
                                                             }} 
                                                             style={{ display: 'none' }}
