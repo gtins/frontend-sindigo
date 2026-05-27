@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
+import AttachmentService from '../services/attachmentService';
 import type { CreateTicketPayload } from '../types';
 
 interface CreateTicketModalProps {
@@ -17,6 +18,22 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
     const [location, setLocation] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const filesArray = Array.from(e.target.files);
+            if (selectedFiles.length + filesArray.length > 3) {
+                alert('Você só pode anexar até 3 fotos de evidência.');
+                return;
+            }
+            setSelectedFiles((prev) => [...prev, ...filesArray]);
+        }
+    };
+
+    const removeFile = (index: number) => {
+        setSelectedFiles((prev) => prev.filter((_, idx) => idx !== index));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,7 +42,19 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
 
         try {
             const payload: CreateTicketPayload = { title, description, category, priority, location };
-            await CondominiumService.createTicket(condominiumId, payload);
+            const createdTicket = await CondominiumService.createTicket(condominiumId, payload);
+            
+            const ticketId = createdTicket?.id || (createdTicket as any)?.data?.id;
+            if (selectedFiles.length > 0 && ticketId) {
+                for (const file of selectedFiles) {
+                    try {
+                        await AttachmentService.uploadTicketAttachment(ticketId, file);
+                    } catch (uploadErr) {
+                        console.error('Failed to upload file:', file.name, uploadErr);
+                    }
+                }
+            }
+
             onSuccess();
         } catch (err: any) {
             console.error('Error creating ticket:', err);
@@ -89,6 +118,35 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
                         <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)} style={inputStyle} placeholder="Ex: Subsolo 1, Vaga 42" />
                     </div>
 
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Fotos de Evidência (Máx. 3 fotos)</label>
+                        <input 
+                            type="file" 
+                            multiple 
+                            accept="image/*" 
+                            onChange={handleFileChange} 
+                            style={inputStyle} 
+                            disabled={loading}
+                        />
+                        {selectedFiles.length > 0 && (
+                            <div style={previewContainerStyle}>
+                                {selectedFiles.map((file, idx) => (
+                                    <div key={idx} style={previewItemStyle}>
+                                        <span style={previewNameStyle}>{file.name}</span>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeFile(idx)} 
+                                            style={removeFileBtnStyle}
+                                            disabled={loading}
+                                        >
+                                            Remover
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     <div style={footerStyle}>
                         <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading}>Cancelar</button>
                         <button type="submit" style={submitBtnStyle} disabled={loading}>
@@ -114,3 +172,42 @@ const footerStyle: React.CSSProperties = { display: 'flex', justifyContent: 'fle
 const cancelBtnStyle: React.CSSProperties = { padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569', fontWeight: 500, cursor: 'pointer' };
 const submitBtnStyle: React.CSSProperties = { padding: '8px 16px', borderRadius: '6px', border: 'none', backgroundColor: '#1e40af', color: '#fff', fontWeight: 500, cursor: 'pointer' };
 const errorStyle: React.CSSProperties = { padding: '10px', borderRadius: '6px', backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '0.875rem', marginBottom: '16px' };
+
+const previewContainerStyle: React.CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    marginTop: '8px',
+    backgroundColor: '#f8fafc',
+    padding: '8px',
+    borderRadius: '6px',
+    border: '1px dashed #cbd5e1'
+};
+
+const previewItemStyle: React.CSSProperties = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    fontSize: '0.75rem',
+    color: '#334155',
+    backgroundColor: '#fff',
+    padding: '6px 8px',
+    borderRadius: '4px',
+    border: '1px solid #e2e8f0'
+};
+
+const previewNameStyle: React.CSSProperties = {
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    maxWidth: '280px'
+};
+
+const removeFileBtnStyle: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: '#ef4444',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    fontWeight: 500
+};
