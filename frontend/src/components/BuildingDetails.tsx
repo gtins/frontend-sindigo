@@ -261,7 +261,7 @@ export const BuildingDetails: React.FC = () => {
                             <div className="activity-list">
                                 {(!Array.isArray(filteredActivities) || filteredActivities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
                                 {Array.isArray(filteredActivities) && filteredActivities.map(activity => (
-                                    <div key={activity.id || (activity as any).activityId} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: activity.id || (activity as any).activityId }, 'activity')}>
+                                    <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')}>
                                         <div className="activity-icon hover-icon-white">
                                             {activity.type === 'ONCE' && <Calendar size={20} color="#64748b" />}
                                             {activity.type === 'PERIODIC' && <Calendar size={20} color="#22c55e" />}

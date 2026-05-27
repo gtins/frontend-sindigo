@@ -92,10 +92,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
 
                 const attachmentsMap: Record<string, Attachment[]> = {};
                 for (const act of linkedActivities) {
-                    const actId = act.id || act.activityId;
+                    const actId = act.activityId || act.id;
                     if (actId) {
                         try {
-                            const res = await AttachmentService.getActivityAttachments(actId);
+                            const res = act.origin === 'CHAMADO' && act.ticketId
+                                ? await AttachmentService.getTicketAttachments(act.ticketId)
+                                : await AttachmentService.getActivityAttachments(actId);
                             attachmentsMap[actId] = res || [];
                         } catch (e) {
                             console.error('Failed to load attachments for activity:', actId, e);
@@ -146,7 +148,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
         try {
             await AttachmentService.deleteAttachment(attachmentId);
             alert('Nota fiscal removida com sucesso!');
-            const res = await AttachmentService.getActivityAttachments(activityId);
+            const act = providerActivities.find(a => (a.activityId || a.id) === activityId);
+            const res = act && act.origin === 'CHAMADO' && act.ticketId
+                ? await AttachmentService.getTicketAttachments(act.ticketId)
+                : await AttachmentService.getActivityAttachments(activityId);
             setActivityAttachments(prev => ({
                 ...prev,
                 [activityId]: res || []
@@ -162,11 +167,18 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
             alert('A nota fiscal deve ser um arquivo PDF.');
             return;
         }
+        const act = providerActivities.find(a => (a.activityId || a.id) === activityId);
         setUploadingActivityId(activityId);
         try {
-            await AttachmentService.uploadActivityAttachment(activityId, file);
+            if (act && act.origin === 'CHAMADO' && act.ticketId) {
+                await AttachmentService.uploadTicketAttachment(act.ticketId, file);
+            } else {
+                await AttachmentService.uploadActivityAttachment(activityId, file);
+            }
             alert('Nota fiscal enviada com sucesso!');
-            const res = await AttachmentService.getActivityAttachments(activityId);
+            const res = act && act.origin === 'CHAMADO' && act.ticketId
+                ? await AttachmentService.getTicketAttachments(act.ticketId)
+                : await AttachmentService.getActivityAttachments(activityId);
             setActivityAttachments(prev => ({
                 ...prev,
                 [activityId]: res || []
@@ -193,7 +205,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
         setIsSubmitting(true);
         try {
             if (type === 'activity') {
-                const actId = item.id || (item as any).activityId;
+                const actId = (item as any).activityId || item.id;
                 await CondominiumService.closeActivity(condominiumId, actId, {
                     status: closeStatus as 'COMPLETED' | 'CANCELLED',
                     closingNotes: closingNotes.trim()
@@ -354,9 +366,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {providerActivities.map(act => {
-                                const actId = act.id || act.activityId;
+                                const actId = act.activityId || act.id;
                                 const attachments = activityAttachments[actId] || [];
-                                const invoice = attachments.find(att => att.contentType === 'application/pdf' || att.name.toLowerCase().endsWith('.pdf'));
                                 
                                 return (
                                     <div key={actId} style={{ 
@@ -387,59 +398,63 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         </div>
                                         
                                         <div style={{ 
-                                            marginTop: '6px', 
+                                            marginTop: '8px', 
                                             paddingTop: '8px', 
                                             borderTop: '1px dashed #cbd5e1',
                                             display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            minHeight: '36px'
+                                            flexDirection: 'column',
+                                            gap: '8px'
                                         }}>
-                                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>Nota Fiscal:</span>
-                                            {uploadingActivityId === actId ? (
-                                                <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Enviando PDF...</span>
-                                            ) : invoice ? (
-                                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                                    <span style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontWeight: 500 }} onClick={() => handleViewActivityInvoice(invoice.id)}>
-                                                        📄 {invoice.name}
-                                                    </span>
-                                                    <button 
-                                                        onClick={() => handleDeleteActivityInvoice(actId, invoice.id)}
-                                                        style={{ 
-                                                            background: 'none', 
-                                                            border: 'none', 
-                                                            color: '#ef4444', 
-                                                            cursor: 'pointer', 
-                                                            fontSize: '0.75rem',
-                                                            padding: '2px 4px',
-                                                            fontWeight: 500
-                                                        }}
-                                                        title="Excluir Nota Fiscal"
-                                                    >
-                                                        Excluir
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <label style={{ 
-                                                        fontSize: '0.75rem', 
-                                                        color: '#2563eb', 
-                                                        cursor: 'pointer',
-                                                        fontWeight: 500,
-                                                        textDecoration: 'underline'
-                                                    }}>
-                                                        Anexar Nota Fiscal (PDF)
-                                                        <input 
-                                                            type="file" 
-                                                            accept=".pdf" 
-                                                            onChange={(e) => {
-                                                                if (e.target.files && e.target.files[0]) {
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>Anexos / Nota Fiscal:</span>
+                                                <label style={{ 
+                                                    fontSize: '0.75rem', 
+                                                    color: '#2563eb', 
+                                                    cursor: 'pointer',
+                                                    fontWeight: 500,
+                                                    textDecoration: 'underline'
+                                                }}>
+                                                    Anexar Arquivo
+                                                    <input 
+                                                        type="file" 
+                                                        onChange={(e) => {
+                                                            if (e.target.files && e.target.files[0]) {
                                                                     handleUploadActivityInvoice(actId, e.target.files[0]);
-                                                                }
-                                                            }} 
-                                                            style={{ display: 'none' }}
-                                                        />
-                                                    </label>
+                                                            }
+                                                        }} 
+                                                        style={{ display: 'none' }}
+                                                    />
+                                                </label>
+                                            </div>
+                                            
+                                            {uploadingActivityId === actId ? (
+                                                <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Enviando arquivo...</span>
+                                            ) : attachments.length === 0 ? (
+                                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Nenhum anexo encontrado.</span>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                    {attachments.map(att => (
+                                                        <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '6px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+                                                            <span style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontWeight: 500 }} onClick={() => handleViewActivityInvoice(att.id)}>
+                                                                📄 {att.name || `Anexo-${att.id.substring(0, 8)}`}
+                                                            </span>
+                                                            <button 
+                                                                onClick={() => handleDeleteActivityInvoice(actId, att.id)}
+                                                                style={{ 
+                                                                    background: 'none', 
+                                                                    border: 'none', 
+                                                                    color: '#ef4444', 
+                                                                    cursor: 'pointer', 
+                                                                    fontSize: '0.75rem',
+                                                                    padding: '2px 4px',
+                                                                    fontWeight: 500
+                                                                }}
+                                                                title="Excluir Anexo"
+                                                            >
+                                                                Excluir
+                                                            </button>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>

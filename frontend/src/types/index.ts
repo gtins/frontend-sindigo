@@ -19,6 +19,11 @@ export interface Activity {
   status?: string;
   closedAt?: string;
   closingNotes?: string;
+  activityId?: string;
+  ticketId?: string;
+  origin?: string;
+  providerId?: string;
+  provider?: { id: string };
 }
 
 export interface CreateActivityPayload {
