@@ -271,6 +271,8 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
             <div>
                 {renderRow('ID da Reserva', reservation.id)}
                 {renderRow('Área', reservation.area)}
+                {reservation.requestedByName && renderRow('Solicitado por', reservation.requestedByName)}
+                {reservation.requestedByUnit && renderRow('Unidade', reservation.requestedByUnit)}
                 {renderRow('Criado em', reservation.createdAt ? new Date(reservation.createdAt).toLocaleString('pt-BR') : '')}
                 {renderRow('Início', reservation.startTime ? new Date(reservation.startTime).toLocaleString('pt-BR') : '')}
                 {renderRow('Fim', reservation.endTime ? new Date(reservation.endTime).toLocaleString('pt-BR') : '')}

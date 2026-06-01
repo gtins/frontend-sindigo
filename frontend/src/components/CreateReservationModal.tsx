@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
 import type { CreateReservationPayload } from '../types';
@@ -13,8 +13,50 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
     const [area, setArea] = useState('');
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
+    const [unitNumber, setUnitNumber] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const [checkingAvailability, setCheckingAvailability] = useState(false);
+    const [availabilityMessage, setAvailabilityMessage] = useState('');
+    const [availabilityStatus, setAvailabilityStatus] = useState<'available' | 'conflicts' | null>(null);
+
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (!area || !startTime) {
+                setAvailabilityMessage('');
+                setAvailabilityStatus(null);
+                return;
+            }
+
+            setCheckingAvailability(true);
+            setAvailabilityMessage('Verificando disponibilidade...');
+            setAvailabilityStatus(null);
+
+            try {
+                // Extract date from datetime-local (YYYY-MM-DDTHH:mm)
+                const datePart = startTime.split('T')[0];
+                if (datePart) {
+                    const response = await CondominiumService.checkAvailability(condominiumId, area, datePart);
+                    if (response.available) {
+                        setAvailabilityStatus('available');
+                        setAvailabilityMessage('✅ Esta área está livre na data selecionada!');
+                    } else {
+                        setAvailabilityStatus('conflicts');
+                        setAvailabilityMessage('⚠️ Indisponível: Já existem conflitos ou reservas para esta área no dia selecionado.');
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking availability:', err);
+                setAvailabilityMessage('');
+                setAvailabilityStatus(null);
+            } finally {
+                setCheckingAvailability(false);
+            }
+        };
+
+        checkAvailability();
+    }, [area, startTime, condominiumId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,7 +64,7 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
         setError('');
 
         try {
-            const payload: CreateReservationPayload = { area, startTime, endTime };
+            const payload: CreateReservationPayload = { area, startTime, endTime, unitNumber };
             await CondominiumService.createReservation(condominiumId, payload);
             onSuccess();
         } catch (err: any) {
@@ -68,10 +110,38 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
                             <input type="datetime-local" required value={endTime} step="1" onChange={(e) => setEndTime(e.target.value)} style={inputStyle} />
                         </div>
                     </div>
+
+                    {availabilityMessage && (
+                        <div style={{
+                            padding: '10px 12px',
+                            borderRadius: '6px',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            backgroundColor: availabilityStatus === 'available' ? '#f0fdf4' : availabilityStatus === 'conflicts' ? '#fffbeb' : '#f8fafc',
+                            color: availabilityStatus === 'available' ? '#16a34a' : availabilityStatus === 'conflicts' ? '#d97706' : '#64748b',
+                            border: `1px solid ${availabilityStatus === 'available' ? '#bbf7d0' : availabilityStatus === 'conflicts' ? '#fde68a' : '#e2e8f0'}`,
+                            marginTop: '4px',
+                            transition: 'all 0.2s ease-in-out'
+                        }}>
+                            {availabilityMessage}
+                        </div>
+                    )}
+
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Número da Unidade (Ex: 201, 202)</label>
+                        <input 
+                            type="text" 
+                            required 
+                            placeholder="Informe o número da sua unidade" 
+                            value={unitNumber} 
+                            onChange={(e) => setUnitNumber(e.target.value)} 
+                            style={inputStyle} 
+                        />
+                    </div>
                     
                     <div style={footerStyle}>
-                        <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading}>Cancelar</button>
-                        <button type="submit" style={submitBtnStyle} disabled={loading}>
+                        <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading || checkingAvailability}>Cancelar</button>
+                        <button type="submit" style={submitBtnStyle} disabled={loading || checkingAvailability}>
                             {loading ? 'Salvando...' : 'Confirmar Reserva'}
                         </button>
                     </div>

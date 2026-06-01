@@ -2,11 +2,13 @@ export interface Condominium {
   id: string; // UUID
   name: string;
   address: string;
+  unidades?: number;
 }
 
 export interface CreateCondominiumPayload {
   name: string;
   address: string;
+  unidades: number;
 }
 
 export interface Activity {
@@ -45,6 +47,8 @@ export interface Reservation {
   endTime: string;
   status?: string;
   requestedBy?: string;
+  requestedByName?: string;
+  requestedByUnit?: string;
   createdAt?: string | null;
 }
 
@@ -52,6 +56,15 @@ export interface CreateReservationPayload {
   area: string;
   startTime: string;
   endTime: string;
+  unitNumber: string;
+}
+
+export interface AvailabilityResponse {
+  available: boolean;
+  conflictsFound: boolean;
+  date: string;
+  area: string;
+  condominiumId: string;
 }
 
 export interface ReservationApprovalPayload {

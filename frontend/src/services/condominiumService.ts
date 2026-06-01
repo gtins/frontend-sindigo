@@ -8,7 +8,8 @@ import type {
   CreateReservationPayload,
   ReservationApprovalPayload,
   CloseActivityPayload,
-  CloseTicketPayload
+  CloseTicketPayload,
+  AvailabilityResponse
 } from '../types';
 
 const CondominiumService = {
@@ -76,6 +77,13 @@ const CondominiumService = {
 
   approveReservation: async (condominiumId: string, reservationId: string, payload: ReservationApprovalPayload): Promise<Reservation> => {
     const response = await api.patch(`/condominiums/${condominiumId}/reservations/${reservationId}`, payload);
+    return response.data;
+  },
+
+  checkAvailability: async (condominiumId: string, area: string, date: string): Promise<AvailabilityResponse> => {
+    const response = await api.get(`/condominiums/${condominiumId}/reservations/availability`, {
+      params: { area, date }
+    });
     return response.data;
   },
 

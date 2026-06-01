@@ -76,7 +76,7 @@ export const BuildingDetails: React.FC = () => {
 
     // Placeholders
     const openTicketsCount = tickets.filter(t => ['OPEN', 'ABERTO'].includes(t.status)).length;
-    const placeholderUnits = 'Placeholder';
+    const placeholderUnits = condominium?.unidades !== undefined ? String(condominium.unidades) : 'N/A';
     const placeholderStatus: 'healthy' | 'attention' | 'warning' = openTicketsCount === 0 ? 'healthy' : openTicketsCount > 5 ? 'warning' : 'attention';
 
     const nextPeriodicActivity = activities
@@ -306,7 +306,14 @@ export const BuildingDetails: React.FC = () => {
                                         <div className="activity-icon hover-icon-white">
                                             <BookOpen size={20} />
                                         </div>
-                                        <div className="activity-content hover-text-white">{res.area || `Reserva #${res.id}`}</div>
+                                        <div className="activity-content hover-text-white">
+                                            <div>{res.area || `Reserva #${res.id}`}</div>
+                                            {res.requestedByName && (
+                                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                                                    Solicitado por: <strong>{res.requestedByName}</strong> {res.requestedByUnit ? `(Unidade ${res.requestedByUnit})` : ''}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="activity-time" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                             <span className="hover-text-white">
                                                 {res.startTime ? new Date(res.startTime).toLocaleString('pt-BR') : ''} - {res.endTime ? new Date(res.endTime).toLocaleString('pt-BR') : ''}

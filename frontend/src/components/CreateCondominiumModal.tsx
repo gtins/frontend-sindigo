@@ -11,6 +11,7 @@ interface CreateCondominiumModalProps {
 export const CreateCondominiumModal: React.FC<CreateCondominiumModalProps> = ({ onClose, onSuccess }) => {
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
+    const [unidades, setUnidades] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -20,7 +21,7 @@ export const CreateCondominiumModal: React.FC<CreateCondominiumModalProps> = ({ 
         setError('');
 
         try {
-            const payload: CreateCondominiumPayload = { name, address };
+            const payload: CreateCondominiumPayload = { name, address, unidades: Number(unidades) };
             await CondominiumService.create(payload);
             onSuccess(); // Triggers a re-fetch and closes modal
         } catch (err: any) {
@@ -60,6 +61,19 @@ export const CreateCondominiumModal: React.FC<CreateCondominiumModalProps> = ({ 
                             required 
                             value={address} 
                             onChange={(e) => setAddress(e.target.value)} 
+                            style={inputStyle}
+                        />
+                    </div>
+
+                    <div style={inputGroupStyle}>
+                        <label style={labelStyle}>Quantidade de Unidades</label>
+                        <input 
+                            type="number" 
+                            required 
+                            min="1"
+                            placeholder="Ex: 10"
+                            value={unidades} 
+                            onChange={(e) => setUnidades(e.target.value)} 
                             style={inputStyle}
                         />
                     </div>
