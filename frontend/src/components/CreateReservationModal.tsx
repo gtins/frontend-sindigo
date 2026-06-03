@@ -29,6 +29,33 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
                 return;
             }
 
+            // Validar antecedência mínima de 7 dias
+            const start = new Date(startTime);
+            const now = new Date();
+            const minStartDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+            
+            if (start < minStartDate) {
+                setAvailabilityStatus('conflicts');
+                setAvailabilityMessage('⚠️ Inválido: Reservas precisam ser feitas com no mínimo 7 dias de antecedência.');
+                return;
+            }
+
+            // Validar período máximo de 6 horas se o horário de fim estiver preenchido
+            if (endTime) {
+                const end = new Date(endTime);
+                const durationMs = end.getTime() - start.getTime();
+                if (durationMs <= 0) {
+                    setAvailabilityStatus('conflicts');
+                    setAvailabilityMessage('⚠️ Inválido: A data de fim deve ser posterior à data de início.');
+                    return;
+                }
+                if (durationMs > 6 * 60 * 60 * 1000) {
+                    setAvailabilityStatus('conflicts');
+                    setAvailabilityMessage('⚠️ Inválido: O período de reserva não pode ser superior a 6 horas.');
+                    return;
+                }
+            }
+
             setCheckingAvailability(true);
             setAvailabilityMessage('Verificando disponibilidade...');
             setAvailabilityStatus(null);
@@ -56,12 +83,35 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
         };
 
         checkAvailability();
-    }, [area, startTime, condominiumId]);
+    }, [area, startTime, endTime, condominiumId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const now = new Date();
+        const minStartDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        if (start < minStartDate) {
+            setError('As reservas precisam ser feitas com no mínimo 7 dias de antecedência.');
+            setLoading(false);
+            return;
+        }
+
+        const durationMs = end.getTime() - start.getTime();
+        if (durationMs <= 0) {
+            setError('A data/hora de fim deve ser posterior à data/hora de início.');
+            setLoading(false);
+            return;
+        }
+        if (durationMs > 6 * 60 * 60 * 1000) {
+            setError('O período de reserva não pode ser superior a 6 horas.');
+            setLoading(false);
+            return;
+        }
 
         try {
             const payload: CreateReservationPayload = { area, startTime, endTime, unitNumber };
@@ -69,7 +119,8 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
             onSuccess();
         } catch (err: any) {
             console.error('Error creating reservation:', err);
-            setError('Falha ao criar a reserva. Tente novamente.');
+            const msg = err.response?.data?.message || err.response?.data?.error || 'Falha ao criar a reserva. Tente novamente.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -81,6 +132,23 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
                 <div style={headerStyle}>
                     <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Nova Reserva</h2>
                     <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
+                </div>
+                
+                <div style={{
+                    padding: '12px 16px',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    backgroundColor: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #bfdbfe',
+                    marginBottom: '16px',
+                    lineHeight: '1.4'
+                }}>
+                    <strong>Regras de Reserva:</strong>
+                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                        <li>Mínimo de <strong>7 dias</strong> de antecedência.</li>
+                        <li>Duração máxima de até <strong>6 horas</strong>.</li>
+                    </ul>
                 </div>
                 
                 {error && <div style={errorStyle}>{error}</div>}
