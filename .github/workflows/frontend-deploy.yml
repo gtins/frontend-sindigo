@@ -1,0 +1,49 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/frontend/**"
+      - ".github/workflows/frontend-deploy.yml"
+  workflow_dispatch:
+
+jobs:
+  build-push-deploy:
+    name: Build, push and deploy frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend/frontend
+          file: ./frontend/frontend/Dockerfile
+          push: true
+          tags: |
+            gtins/sindigo-frontend:latest
+            gtins/sindigo-frontend:${{ github.sha }}
+          build-args: |
+            VITE_API_URL=/api
+
+      - name: Deploy frontend on EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/sindigo-full-deploy
+            docker compose pull frontend
+            docker compose up -d --no-deps frontend
+            docker image prune -f
