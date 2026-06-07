@@ -80,14 +80,15 @@ export const BuildingsPage: React.FC = () => {
     }, [refreshKey]);
     return (
         <div className="content-wrapper">
-            <div className="page-header">
-                <h2 className="page-title">Prédios gerenciados</h2>
+            <div className="page-header-container" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h2 className="page-title-main" style={{ fontSize: '1.6rem' }}>Prédios gerenciados</h2>
+                    <p className="page-subtitle-main" style={{ margin: '4px 0 0 0', fontSize: '0.875rem' }}>
+                        Gerencie os condomínios cadastrados, unidades, chamados e status operacional.
+                    </p>
+                </div>
 
                 <div className="header-actions">
-                    <button className="action-btn">
-                        <Search size={18} />
-                        Buscar
-                    </button>
                     {(localStorage.getItem('role')?.includes('ADMIN') || localStorage.getItem('role')?.includes('SINDICO')) && (
                         <button className="primary-btn" onClick={() => setIsCreateModalOpen?.(true)}>
                             <Plus size={18} />
@@ -97,12 +98,12 @@ export const BuildingsPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="filter-bar">
+            <div className="filter-bar" style={{ marginTop: '20px' }}>
                 <div className="search-input-wrapper">
                     <Search size={18} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Buscar prédios, endereço..."
+                        placeholder="Buscar por prédio, endereço ou condomínio..."
                         className="search-input"
                     />
                 </div>
@@ -129,7 +130,7 @@ export const BuildingsPage: React.FC = () => {
                 </div>
                 <div className="legend-item">
                     <span className="dot gray"></span>
-                    <span>Em breve</span>
+                    <span>Sem dados</span>
                 </div>
             </div>
 
@@ -148,9 +149,9 @@ export const BuildingsPage: React.FC = () => {
                                 data={{
                                     id: building.id as any,
                                     name: building.name,
-                                    units: 0, // Placeholder
+                                    units: building.unidades || 0,
                                     tickets: openTickets,
-                                    lastUpdate: 'Agora', // Placeholder
+                                    lastUpdate: 'agora',
                                     status: status,
                                 }}
                                 onClick={() => navigate(`/buildings/${building.id}`)}

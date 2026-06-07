@@ -1,19 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import CondominiumService from '../services/condominiumService';
 import type { Condominium, Activity, Ticket } from '../types';
 import { ItemDetailsModal } from './ItemDetailsModal';
 import '../styles/dashboard.css';
 
 export const GlobalCalendarPage: React.FC = () => {
+    const navigate = useNavigate();
     const [activities, setActivities] = useState<(Activity & { condominiumName: string })[]>([]);
     const [tickets, setTickets] = useState<(Ticket & { condominiumName: string })[]>([]);
+    const [reservations, setReservations] = useState<(any & { condominiumName: string })[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [itemType, setItemType] = useState<'activity' | 'ticket' | null>(null);
+    const [itemType, setItemType] = useState<'activity' | 'ticket' | 'reservation' | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [filterType, setFilterType] = useState<'all' | 'activity' | 'ticket' | 'reservation'>('all');
 
     useEffect(() => {
         const fetchGlobalData = async () => {
@@ -34,8 +38,6 @@ export const GlobalCalendarPage: React.FC = () => {
                     name: item.condominiumName || item.name
                 }));
                 
-
-
                 const activitiesResults = await Promise.all(parsedCondos.map(async (condo: Condominium) => {
                     try {
                         const condoIdStr = condo.id as string;
@@ -60,11 +62,25 @@ export const GlobalCalendarPage: React.FC = () => {
                     }
                 }));
 
+                const reservationsResults = await Promise.all(parsedCondos.map(async (condo: Condominium) => {
+                    try {
+                        const condoIdStr = condo.id as string;
+                        let resData = await CondominiumService.getReservations(condoIdStr);
+                        if (resData && !Array.isArray(resData)) resData = (resData as any).content || [];
+                        return (resData || []).map((r: any) => ({ ...r, condominiumName: condo.name }));
+                    } catch (err) {
+                        console.error(`Failed to fetch reservations for condo ${condo.id}`, err);
+                        return [];
+                    }
+                }));
+
                 const allActivities = activitiesResults.flat();
                 const allTickets = ticketsResults.flat();
+                const allReservations = reservationsResults.flat();
 
                 setActivities(allActivities);
                 setTickets(allTickets);
+                setReservations(allReservations);
 
             } catch (err) {
                 console.error('Failed to fetch global calendar data:', err);
@@ -96,26 +112,44 @@ export const GlobalCalendarPage: React.FC = () => {
             
             const dayActivities = activities.filter(a => a.startDate && typeof a.startDate === 'string' && a.startDate.startsWith(dateStr));
             const dayTickets = tickets.filter(t => t.createdAt && typeof t.createdAt === 'string' && t.createdAt.startsWith(dateStr));
+            const dayReservations = reservations.filter(r => r.startTime && typeof r.startTime === 'string' && r.startTime.startsWith(dateStr));
 
-            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+            const isTodayStr = new Date().toISOString().split('T')[0];
+            const isToday = isTodayStr === dateStr;
 
             days.push(
                 <div key={i} className={`calendar-cell ${isToday ? 'today' : ''}`}>
-                    <div className="calendar-day-number">{i}</div>
+                    <div className="calendar-day-header">
+                        {isToday && <span className="today-badge">Hoje</span>}
+                        <span className={`calendar-day-number ${isToday ? 'today-circle' : ''}`}>{i}</span>
+                    </div>
                     <div className="calendar-events">
-                        {dayActivities.map((act, idx) => (
+                        {['all', 'activity'].includes(filterType) && dayActivities.map((act, idx) => (
                             <div key={`act-${idx}`} className="calendar-event act-event" title={`${act.title} - ${act.condominiumName}`} onClick={() => { setSelectedItem(act); setItemType('activity'); }}>
-                                {act.title}
+                                📅 {act.title}
                             </div>
                         ))}
-                        {dayTickets.map((tkt, idx) => (
+                        {['all', 'ticket'].includes(filterType) && dayTickets.map((tkt, idx) => (
                             <div key={`tkt-${idx}`} className="calendar-event tkt-event" title={`${tkt.title} - ${tkt.condominiumName}`} onClick={() => { setSelectedItem(tkt); setItemType('ticket'); }}>
-                                {tkt.title}
+                                🔧 {tkt.title}
+                            </div>
+                        ))}
+                        {['all', 'reservation'].includes(filterType) && dayReservations.map((res, idx) => (
+                            <div key={`res-${idx}`} className="calendar-event res-event" title={`${res.area} - ${res.condominiumName}`} onClick={() => { setSelectedItem(res); setItemType('reservation' as any); }}>
+                                🔑 {res.area}
                             </div>
                         ))}
                     </div>
                 </div>
             );
+        }
+
+        // Fill empty cells at the end of the month to complete the week/grid
+        const totalRendered = firstDay + daysInMonth;
+        const totalCellsNeeded = Math.ceil(totalRendered / 7) * 7;
+        const emptyCellsAtEnd = totalCellsNeeded - totalRendered;
+        for (let i = 0; i < emptyCellsAtEnd; i++) {
+            days.push(<div key={`empty-end-${i}`} className="calendar-cell empty"></div>);
         }
 
         return days;
@@ -129,22 +163,70 @@ export const GlobalCalendarPage: React.FC = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     };
 
+    const handleGoToToday = () => {
+        setCurrentDate(new Date());
+    };
+
     const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
     return (
         <div className="content-wrapper">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className="page-title">
-                    <CalendarIcon size={24} style={{ marginRight: '10px' }} />
-                    Calendário Global
-                </h2>
+            <div className="page-header-container" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <h2 className="page-title-main">
+                        <CalendarIcon size={24} style={{ color: 'var(--color-accent)' }} />
+                        Calendário Global
+                    </h2>
+                    <p className="page-subtitle-main" style={{ margin: '4px 0 0 0', fontSize: '0.875rem' }}>
+                        Visualize atividades, chamados e reservas agendadas nos condomínios.
+                    </p>
+                </div>
 
-                <div className="calendar-controls" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <button className="secondary-btn" onClick={handlePrevMonth}><ChevronLeft size={18} /></button>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                        {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                    </span>
-                    <button className="secondary-btn" onClick={handleNextMonth}><ChevronRight size={18} /></button>
+                <div className="header-actions">
+                    {(localStorage.getItem('role')?.includes('ADMIN') || localStorage.getItem('role')?.includes('SINDICO')) && (
+                        <button className="primary-btn" onClick={() => navigate('/buildings')}>
+                            <Plus size={18} />
+                            Nova atividade
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="calendar-control-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '20px 0 16px 0', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="month-nav-container">
+                        <button className="nav-arrow-btn" onClick={handlePrevMonth}><ChevronLeft size={16} /></button>
+                        <span className="month-display-text">
+                            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                        </span>
+                        <button className="nav-arrow-btn" onClick={handleNextMonth}><ChevronRight size={16} /></button>
+                    </div>
+                    
+                    <button className="action-btn" style={{ padding: '8px 16px', fontSize: '0.85rem' }} onClick={handleGoToToday}>
+                        Hoje
+                    </button>
+                </div>
+
+                <div className="calendar-filter-group">
+                    <button className={`filter-tab ${filterType === 'all' ? 'active' : ''}`} onClick={() => setFilterType('all')}>Todos</button>
+                    <button className={`filter-tab ${filterType === 'activity' ? 'active' : ''}`} onClick={() => setFilterType('activity')}>Atividades</button>
+                    <button className={`filter-tab ${filterType === 'ticket' ? 'active' : ''}`} onClick={() => setFilterType('ticket')}>Chamados</button>
+                    <button className={`filter-tab ${filterType === 'reservation' ? 'active' : ''}`} onClick={() => setFilterType('reservation')}>Reservas</button>
+                </div>
+            </div>
+
+            <div className="legend" style={{ marginBottom: '16px', display: 'flex', gap: '16px', fontSize: '0.82rem' }}>
+                <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="dot blue" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b82f6', display: 'inline-block' }}></span>
+                    <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Atividades</span>
+                </div>
+                <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="dot red" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }}></span>
+                    <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Chamados</span>
+                </div>
+                <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="dot orange" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f59e0b', display: 'inline-block' }}></span>
+                    <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>Reservas</span>
                 </div>
             </div>
 
@@ -168,11 +250,12 @@ export const GlobalCalendarPage: React.FC = () => {
             <style>{`
                 .calendar-container {
                     background: white;
-                    border-radius: 8px;
-                    border: 1px solid #e2e8f0;
+                    border-radius: var(--radius-lg);
+                    border: 1px solid var(--border-color);
                     overflow: hidden;
                     display: flex;
                     flex-direction: column;
+                    box-shadow: var(--shadow-card);
                 }
                 .calendar-header-row {
                     display: grid;
@@ -181,40 +264,73 @@ export const GlobalCalendarPage: React.FC = () => {
                     border-bottom: 1px solid #e2e8f0;
                 }
                 .calendar-header-cell {
-                    padding: 12px;
+                    padding: 10px;
                     text-align: center;
-                    font-weight: 600;
-                    color: #475569;
-                    font-size: 0.875rem;
+                    font-weight: 700;
+                    color: var(--text-secondary);
+                    font-size: 0.78rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
                 }
                 .calendar-grid {
                     display: grid;
                     grid-template-columns: repeat(7, 1fr);
-                    background-color: #e2e8f0;
+                    background-color: #f1f5f9; /* Soft grid lines */
                     gap: 1px;
                 }
                 .calendar-cell {
                     background: white;
-                    min-height: 120px;
-                    padding: 8px;
+                    min-height: 105px;
+                    padding: 10px;
                     display: flex;
                     flex-direction: column;
+                    transition: background-color 0.2s ease;
+                }
+                .calendar-cell:not(.empty) {
+                    cursor: pointer;
+                }
+                .calendar-cell:not(.empty):hover {
+                    background-color: var(--bg-hover);
                 }
                 .calendar-cell.empty {
-                    background: #f8fafc;
+                    background: #fafafa;
                 }
-                .calendar-cell.today {
-                    background: #f0fdf4;
+                .calendar-day-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 6px;
+                }
+                .today-badge {
+                    font-size: 0.65rem;
+                    font-weight: 600;
+                    color: var(--color-accent);
+                    background-color: var(--color-accent-light);
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
                 }
                 .calendar-day-number {
                     font-weight: 600;
-                    color: #1e293b;
-                    margin-bottom: 8px;
-                    text-align: right;
-                    font-size: 0.875rem;
+                    color: var(--text-main);
+                    font-size: 0.85rem;
+                    width: 24px;
+                    height: 24px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
                 }
-                .calendar-cell.today .calendar-day-number {
-                    color: #16a34a;
+                .today-circle {
+                    background-color: var(--color-accent);
+                    color: white !important;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
                 }
                 .calendar-events {
                     display: flex;
@@ -224,23 +340,113 @@ export const GlobalCalendarPage: React.FC = () => {
                     flex: 1;
                 }
                 .calendar-event {
-                    font-size: 0.75rem;
-                    padding: 4px 6px;
-                    border-radius: 4px;
+                    font-size: 0.72rem;
+                    font-weight: 600;
+                    padding: 5px 8px;
+                    border-radius: 6px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     cursor: pointer;
+                    border: 1px solid transparent;
+                    border-left-width: 3px;
+                    transition: all 0.2s ease;
+                }
+                .calendar-event:hover {
+                    transform: translateY(-0.5px);
+                    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
                 }
                 .act-event {
-                    background-color: #e0f2fe;
-                    color: #0369a1;
-                    border-left: 3px solid #0284c7;
+                    background-color: #eff6ff;
+                    color: #1d4ed8;
+                    border-color: #dbeafe;
+                    border-left-color: #3b82f6;
+                }
+                .act-event:hover {
+                    border-color: #cbd5e1;
+                    border-left-color: #2563eb;
                 }
                 .tkt-event {
-                    background-color: #fee2e2;
+                    background-color: #fef2f2;
                     color: #b91c1c;
-                    border-left: 3px solid #ef4444;
+                    border-color: #fee2e2;
+                    border-left-color: #ef4444;
+                }
+                .tkt-event:hover {
+                    border-color: #cbd5e1;
+                    border-left-color: #dc2626;
+                }
+                .res-event {
+                    background-color: #fff7ed;
+                    color: #b45309;
+                    border-color: #ffedd5;
+                    border-left-color: #f59e0b;
+                }
+                .res-event:hover {
+                    border-color: #cbd5e1;
+                    border-left-color: #d97706;
+                }
+                
+                /* Month Nav Styles */
+                .month-nav-container {
+                    background: white;
+                    border: 1px solid var(--border-color);
+                    border-radius: var(--radius-md);
+                    display: flex;
+                    align-items: center;
+                    overflow: hidden;
+                    box-shadow: var(--shadow-sm);
+                }
+                .nav-arrow-btn {
+                    background: transparent;
+                    border: none;
+                    color: var(--text-secondary);
+                    padding: 6px 12px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .nav-arrow-btn:hover {
+                    background-color: var(--bg-hover);
+                    color: var(--text-main);
+                }
+                .month-display-text {
+                    padding: 0 12px;
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: var(--text-main);
+                    min-width: 130px;
+                    text-align: center;
+                }
+                
+                /* Filter Tabs */
+                .calendar-filter-group {
+                    display: flex;
+                    background-color: #f1f5f9;
+                    padding: 3px;
+                    border-radius: 10px;
+                    border: 1px solid #e2e8f0;
+                }
+                .filter-tab {
+                    background: transparent;
+                    border: none;
+                    padding: 6px 14px;
+                    font-size: 0.82rem;
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                }
+                .filter-tab:hover {
+                    color: var(--text-main);
+                }
+                .filter-tab.active {
+                    background-color: white;
+                    color: var(--color-accent-hover);
+                    box-shadow: var(--shadow-sm);
                 }
             `}</style>
 

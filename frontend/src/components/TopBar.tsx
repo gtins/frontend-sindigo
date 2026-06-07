@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut } from 'lucide-react';
-import { Building2 } from 'lucide-react';
+import { LogOut, Building2, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../services/authService';
 
@@ -23,10 +22,11 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
             height: '64px',
             backgroundColor: '#FFFFFF',
             borderBottom: '1px solid #ECECEC',
+            boxShadow: '0 1px 3px rgba(15, 23, 42, 0.02)', /* Soft sutil shadow */
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 24px',
+            padding: '0 32px',
             position: 'sticky',
             top: 0,
             zIndex: 50,
@@ -35,28 +35,29 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
             <div onClick={onHomeClick} style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                gap: '8px',
+                gap: '10px',
                 cursor: 'pointer' 
             }}>
                 <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
-                    width: '32px', 
-                    height: '32px', 
-                    borderRadius: '8px', 
-                    backgroundColor: 'var(--color-accent-light)' 
+                    width: '36px', 
+                    height: '36px', 
+                    borderRadius: '10px', 
+                    backgroundColor: 'var(--color-accent-light)',
+                    boxShadow: '0 1px 2px rgba(79, 70, 229, 0.1)'
                 }}>
-                    <Building2 size={18} color="var(--color-accent)" strokeWidth={2.5} />
+                    <Building2 size={20} color="var(--color-accent)" strokeWidth={2.2} />
                 </div>
                 <h1 style={{ 
                     margin: 0, 
-                    fontSize: '18px', 
-                    fontWeight: 700, 
+                    fontSize: '19px', 
+                    fontWeight: 750, 
                     color: 'var(--text-main)',
-                    letterSpacing: '-0.02em'
+                    letterSpacing: '-0.025em'
                 }}>
-                    Sindigo
+                    SindiGo
                 </h1>
             </div>
 
@@ -67,12 +68,12 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                         style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px',
+                            gap: '10px',
                             background: 'transparent',
                             border: 'none',
                             cursor: 'pointer',
-                            padding: '4px 8px',
-                            borderRadius: '8px',
+                            padding: '6px 12px',
+                            borderRadius: '10px',
                             transition: 'background-color 0.2s',
                         }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
@@ -80,7 +81,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                     >
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>Administrador</span>
-                            <span style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.2 }}>
+                            <span style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.2, marginTop: '2px' }}>
                                 {localStorage.getItem('role')?.includes('ADMIN') ? 'Admin Geral' : localStorage.getItem('role') || 'Morador'}
                             </span>
                         </div>
@@ -94,12 +95,14 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                             alignItems: 'center', 
                             justifyContent: 'center',
                             fontWeight: 600,
-                            fontSize: '14px',
-                            boxShadow: '0 1px 2px rgba(0,0,0,.04)'
+                            fontSize: '13px',
+                            boxShadow: '0 2px 4px rgba(79, 70, 229, 0.15)'
                         }}>
                             AD
                         </div>
+                        <ChevronDown size={16} color="#94a3b8" style={{ transition: 'transform 0.2s', transform: showUserMenu ? 'rotate(180deg)' : 'none' }} />
                     </button>
+
 
                     {showUserMenu && (
                         <div style={{

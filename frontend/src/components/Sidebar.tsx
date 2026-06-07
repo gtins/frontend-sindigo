@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Calendar,
     Users,
@@ -9,8 +9,8 @@ import {
     Activity,
     LayoutDashboard
 } from 'lucide-react';
-import { useState } from 'react';
-import '../styles/dashboard.css'; // We'll add sidebar styles here or in a new file, staying simpler with dashboard.css for now
+import { Link, useLocation } from 'react-router-dom';
+import '../styles/dashboard.css';
 
 interface SidebarProps {
     // Props if needed for active state management in a real app
@@ -18,6 +18,14 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const location = useLocation();
+
+    const isActive = (path: string) => {
+        if (path === '/') {
+            return location.pathname === '/';
+        }
+        return location.pathname.startsWith(path);
+    };
 
     return (
         <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
@@ -25,39 +33,38 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 <h4 className="sidebar-header">Navegação</h4>
 
                 <nav className="nav-menu">
-                    <a href="/" className="nav-item">
+                    <Link to="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>
                         <LayoutDashboard className="nav-icon" size={20} />
                         <span>Dashboard</span>
-                    </a>
+                    </Link>
 
-                    <a href="/buildings" className="nav-item">
+                    <Link to="/buildings" className={`nav-item ${isActive('/buildings') ? 'active' : ''}`}>
                         <Hotel className="nav-icon" size={20} />
                         <span>Prédios</span>
-                    </a>
+                    </Link>
 
-                    <a href="/calendar" className="nav-item">
+                    <Link to="/calendar" className={`nav-item ${isActive('/calendar') ? 'active' : ''}`}>
                         <Calendar className="nav-icon" size={20} />
                         <span>Calendário</span>
-                    </a>
+                    </Link>
 
                     {localStorage.getItem('role')?.includes('ADMIN') && (
                         <>
-                            <a href="/admin/acessos" className="nav-item">
+                            <Link to="/admin/acessos" className={`nav-item ${isActive('/admin/acessos') ? 'active' : ''}`}>
                                 <Users className="nav-icon" size={20} />
                                 <span>Acessos</span>
-                            </a>
-                            <a href="/admin/auditoria" className="nav-item">
+                            </Link>
+                            <Link to="/admin/auditoria" className={`nav-item ${isActive('/admin/auditoria') ? 'active' : ''}`}>
                                 <Activity className="nav-icon" size={20} />
                                 <span>Auditoria</span>
-                            </a>
+                            </Link>
                         </>
                     )}
 
-
-                    <a href="/tickets" className="nav-item">
+                    <Link to="/tickets" className={`nav-item ${isActive('/tickets') ? 'active' : ''}`}>
                         <CheckSquare className="nav-icon" size={20} />
                         <span>Chamados</span>
-                    </a>
+                    </Link>
                 </nav>
             </div>
 
@@ -74,3 +81,4 @@ export const Sidebar: React.FC<SidebarProps> = () => {
         </aside>
     );
 };
+

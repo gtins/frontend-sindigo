@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Calendar, AlertCircle, Clock } from 'lucide-react';
+import { LayoutDashboard, Calendar, AlertCircle, Clock, Hotel, CheckSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CondominiumService from '../services/condominiumService';
 import type { Condominium, Activity, Ticket } from '../types';
@@ -123,29 +123,67 @@ export const GlobalDashboardPage: React.FC = () => {
 
     return (
         <div className="content-wrapper">
-            <div className="page-header">
-                <h2 className="page-title">
-                    <LayoutDashboard size={24} style={{ marginRight: '10px' }} />
+            <div className="page-header-container">
+                <h2 className="page-title-main">
+                    <LayoutDashboard size={24} style={{ color: 'var(--color-accent)' }} />
                     Dashboard Global
                 </h2>
+                <p className="page-subtitle-main">
+                    Visão geral dos prédios, chamados e atividades.
+                </p>
             </div>
 
-            <div className="finance-stats-row" style={{ marginBottom: '24px' }}>
-                <div className="finance-stat-card">
-                    <span className="stat-label">Prédios</span>
-                    <span className="stat-value-lg">{condos.length}</span>
+            <div className="dashboard-stats-grid">
+                <div className="dashboard-stat-card card-blue">
+                    <div className="stat-card-left">
+                        <div className="stat-icon-wrapper">
+                            <Hotel size={20} />
+                        </div>
+                    </div>
+                    <div className="stat-card-right">
+                        <span className="stat-card-label">Prédios cadastrados</span>
+                        <span className="stat-card-value">{condos.length}</span>
+                        <span className="stat-card-desc">Total cadastrado</span>
+                    </div>
                 </div>
-                <div className="finance-stat-card">
-                    <span className="stat-label">Chamados Abertos</span>
-                    <span className="stat-value-lg text-red">{openTicketsCount}</span>
+
+                <div className="dashboard-stat-card card-red">
+                    <div className="stat-card-left">
+                        <div className="stat-icon-wrapper">
+                            <AlertCircle size={20} />
+                        </div>
+                    </div>
+                    <div className="stat-card-right">
+                        <span className="stat-card-label">Chamados abertos</span>
+                        <span className="stat-card-value text-red">{openTicketsCount}</span>
+                        <span className="stat-card-desc">Aguardando atendimento</span>
+                    </div>
                 </div>
-                <div className="finance-stat-card">
-                    <span className="stat-label">Reservas a aprovar</span>
-                    <span className="stat-value-lg text-orange">{pendingReservationsCount}</span>
+
+                <div className="dashboard-stat-card card-amber">
+                    <div className="stat-card-left">
+                        <div className="stat-icon-wrapper">
+                            <Clock size={20} />
+                        </div>
+                    </div>
+                    <div className="stat-card-right">
+                        <span className="stat-card-label">Reservas pendentes</span>
+                        <span className="stat-card-value text-amber">{pendingReservationsCount}</span>
+                        <span className="stat-card-desc">Aguardando aprovação</span>
+                    </div>
                 </div>
-                <div className="finance-stat-card">
-                    <span className="stat-label">Chamados Concluídos</span>
-                    <span className="stat-value-lg text-green">{closedTicketsCount}</span>
+
+                <div className="dashboard-stat-card card-green">
+                    <div className="stat-card-left">
+                        <div className="stat-icon-wrapper">
+                            <CheckSquare size={20} />
+                        </div>
+                    </div>
+                    <div className="stat-card-right">
+                        <span className="stat-card-label">Chamados concluídos</span>
+                        <span className="stat-card-value text-green">{closedTicketsCount}</span>
+                        <span className="stat-card-desc">Total resolvido</span>
+                    </div>
                 </div>
             </div>
 
@@ -154,24 +192,28 @@ export const GlobalDashboardPage: React.FC = () => {
                     <div className="section-card">
                         <div className="section-header">
                             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <AlertCircle size={20} /> Chamados Pendentes Recentes
+                                <AlertCircle size={18} style={{ color: 'var(--color-accent)' }} /> Chamados recentes
                             </h3>
-                            <button className="secondary-btn" onClick={() => navigate('/tickets')}>Ver todos</button>
+                            <button className="text-action-btn" onClick={() => navigate('/tickets')}>
+                                Ver todos <span className="arrow">→</span>
+                            </button>
                         </div>
                         <div className="summary-list">
                             {pendingTickets.length === 0 ? (
-                                <p style={{ padding: '16px', color: '#64748b' }}>Nenhum chamado pendente.</p>
+                                <p style={{ padding: '16px', color: 'var(--text-light)', fontSize: '0.875rem' }}>Nenhum chamado pendente.</p>
                             ) : (
                                 pendingTickets.map((t, idx) => (
-                                    <div key={idx} className="summary-item clickable-item" onClick={() => { setSelectedItem(t); setItemType('ticket'); }} style={{ cursor: 'pointer' }}>
-                                        <div className={`summary-icon ${['OPEN', 'ABERTO'].includes(t.status) ? 'icon-red' : 'icon-orange'}`}>
-                                            {['OPEN', 'ABERTO'].includes(t.status) ? <AlertCircle size={20} /> : <Clock size={20} />}
+                                    <div key={idx} className="summary-item-refactored clickable-item" onClick={() => { setSelectedItem(t); setItemType('ticket'); }}>
+                                        <div className={`summary-icon-refactored ${['OPEN', 'ABERTO'].includes(t.status) ? 'icon-red' : 'icon-orange'}`}>
+                                            {['OPEN', 'ABERTO'].includes(t.status) ? <AlertCircle size={18} /> : <Clock size={18} />}
                                         </div>
-                                        <div className="summary-info" style={{ flex: 1 }}>
-                                            <span className="summary-label" style={{ fontWeight: 600 }}>{t.title}</span>
-                                            <span className="summary-value" style={{ fontSize: '0.85rem' }}>{t.condominiumName}</span>
+                                        <div className="summary-info-refactored">
+                                            <span className="summary-title-main">{t.title}</span>
+                                            <span className="summary-meta-sub">
+                                                {t.condominiumName} • Criado em {t.createdAt ? new Date(t.createdAt).toLocaleDateString('pt-BR') : 'Recente'}
+                                            </span>
                                         </div>
-                                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                                        <div className={`status-badge-compact ${['OPEN', 'ABERTO'].includes(t.status) ? 'badge-red' : 'badge-orange'}`}>
                                             {['OPEN', 'ABERTO'].includes(t.status) ? 'Aberto' : 'Em andamento'}
                                         </div>
                                     </div>
@@ -185,24 +227,27 @@ export const GlobalDashboardPage: React.FC = () => {
                     <div className="section-card">
                         <div className="section-header">
                             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Calendar size={20} /> Próximas Atividades
+                                <Calendar size={18} style={{ color: 'var(--color-accent)' }} /> Próximas atividades
                             </h3>
-                            <button className="secondary-btn" onClick={() => navigate('/calendar')}>Ver calendário</button>
+                            <button className="text-action-btn" onClick={() => navigate('/calendar')}>
+                                Ver calendário <span className="arrow">→</span>
+                            </button>
                         </div>
                         <div className="summary-list">
                             {upcomingActivities.length === 0 ? (
-                                <p style={{ padding: '16px', color: '#64748b' }}>Nenhuma atividade próxima.</p>
+                                <p style={{ padding: '16px', color: 'var(--text-light)', fontSize: '0.875rem' }}>Nenhuma atividade próxima.</p>
                             ) : (
                                 upcomingActivities.map((a, idx) => (
-                                    <div key={idx} className="summary-item clickable-item" onClick={() => { setSelectedItem(a); setItemType('activity'); }} style={{ cursor: 'pointer' }}>
-                                        <div className="summary-icon" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
-                                            <Calendar size={20} />
+                                    <div key={idx} className="summary-item-refactored clickable-item" onClick={() => { setSelectedItem(a); setItemType('activity'); }}>
+                                        <div className="summary-icon-refactored icon-blue-light">
+                                            <Calendar size={18} />
                                         </div>
-                                        <div className="summary-info">
-                                            <span className="summary-label" style={{ fontWeight: 600 }}>{a.title}</span>
-                                            <span className="summary-value" style={{ fontSize: '0.85rem' }}>
-                                                {new Date(a.startDate).toLocaleDateString('pt-BR')} • {a.condominiumName}
-                                            </span>
+                                        <div className="summary-info-refactored">
+                                            <span className="summary-title-main">{a.title}</span>
+                                            <span className="summary-meta-sub">{a.condominiumName || 'Sem condomínio'}</span>
+                                        </div>
+                                        <div className="date-badge-compact">
+                                            {new Date(a.startDate).toLocaleDateString('pt-BR')}
                                         </div>
                                     </div>
                                 ))

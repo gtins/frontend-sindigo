@@ -7,8 +7,8 @@ import '../styles/dashboard.css';
 export const AdminUsersPage: React.FC = () => {
   const [userId, setUserId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'SINDICO' | 'MORADOR'>('MORADOR');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -34,7 +34,7 @@ export const AdminUsersPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId.trim()) {
-      setMessage({ type: 'error', text: 'Informe o ID do usuário.' });
+      setMessage({ type: 'error', text: 'Selecione um usuário para alterar o papel.' });
       return;
     }
 
@@ -43,15 +43,14 @@ export const AdminUsersPage: React.FC = () => {
 
     try {
       const response = await UserService.changeUserRole(userId, selectedRole);
-      setMessage({ type: 'success', text: `Papel do usuário atualizado com sucesso para ${response.role}!` });
+      setMessage({ type: 'success', text: `Papel de ${selectedUser?.name || 'usuário'} atualizado com sucesso para ${response.role}!` });
       
-      // Atualiza o estado local para refletir nos indicadores imediatamente
+      // Atualiza o estado local para refletir nos indicadores e listas imediatamente
       setUsers(prevUsers => prevUsers.map(u => 
         u.id === userId ? { ...u, role: response.role } : u
       ));
       
-      setUserId('');
-      setSearchTerm('');
+      setSelectedUser(selectedUser ? { ...selectedUser, role: response.role } : null);
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message || 'Ocorreu um erro ao tentar atualizar o papel do usuário.' });
     } finally {
@@ -59,275 +58,751 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
+  const handleSelectUser = (u: any) => {
+    setSelectedUser(u);
+    setUserId(u.id);
+    setSelectedRole(u.role as any);
+    setMessage(null);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedUser(null);
+    setUserId('');
+    setMessage(null);
+  };
+
   return (
     <div className="dashboard-container">
       <div className="content-wrapper">
-        <div className="page-header">
-          <h2 className="page-title">Controle de Acessos</h2>
+        <div className="page-header" style={{ marginBottom: 'var(--space-24)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Shield size={22} color="var(--color-accent)" />
+            </div>
+            <div>
+              <h2 className="page-title" style={{ margin: 0 }}>Controle de Acessos</h2>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                Gerencie permissões e papéis dos usuários cadastrados no sistema.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Estatísticas Rápidas */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-24)', marginBottom: 'var(--space-32)' }}>
-            <div className="building-card" style={{ padding: 'var(--space-24)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <span style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '4px' }}>Total de Usuários</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.length}</span>
-                </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Users size={24} color="#4f46e5" />
-                </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-20)', marginBottom: 'var(--space-24)' }}>
+          <div className="building-card" style={{ padding: 'var(--space-16) var(--space-20)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 'auto' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '2px' }}>Total de Usuários</span>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.length}</span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Usuários cadastrados</span>
             </div>
-            
-            <div className="building-card" style={{ padding: 'var(--space-24)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <span style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '4px' }}>Administradores</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'ADMIN').length}</span>
-                </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldAlert size={24} color="#ef4444" />
-                </div>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={20} color="#7c3aed" />
             </div>
+          </div>
+          
+          <div className="building-card" style={{ padding: 'var(--space-16) var(--space-20)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 'auto' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '2px' }}>Administradores</span>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'ADMIN').length}</span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Acesso total</span>
+            </div>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldAlert size={20} color="#1d4ed8" />
+            </div>
+          </div>
 
-            <div className="building-card" style={{ padding: 'var(--space-24)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                    <span style={{ display: 'block', fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '4px' }}>Síndicos</span>
-                    <span style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'SINDICO').length}</span>
-                </div>
-                <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ShieldCheck size={24} color="#10b981" />
-                </div>
+          <div className="building-card" style={{ padding: 'var(--space-16) var(--space-20)', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 'auto' }}>
+            <div>
+              <span style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: '2px' }}>Síndicos</span>
+              <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'SINDICO').length}</span>
+              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Gestores de condomínio</span>
             </div>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={20} color="#0891b2" />
+            </div>
+          </div>
         </div>
 
-        {/* Área de Gerenciamento */}
-        <div style={{ maxWidth: '860px', margin: '0 auto', width: '100%' }}>
-          <div className="building-card" style={{ margin: 0 }}>
-            <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-16)', marginBottom: 'var(--space-24)' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Shield size={22} color="var(--color-accent)" />
-                Atribuição de Papéis
-              </h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                Busque um usuário pelo nome, e-mail ou ID e altere seu nível de permissão no sistema.
-              </p>
+        {/* Grid Principal do Redesenho */}
+        <div className="access-control-grid">
+          
+          {/* Coluna Esquerda: Busca e Lista */}
+          <div className="users-list-card">
+            <h3 className="users-column-title">
+              <Users size={18} color="var(--color-accent)" />
+              Usuários do Sistema
+            </h3>
+            
+            <div className="search-box-container">
+              <label className="input-label">Buscar usuário</label>
+              <div className="custom-search-wrapper">
+                <Search size={18} className="custom-search-icon" />
+                <input
+                  type="text"
+                  className="custom-search-input"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nome, e-mail ou ID..."
+                />
+              </div>
             </div>
 
+            <div className="users-scroll-list">
+              {filteredUsers.map(u => {
+                const isSelected = selectedUser && selectedUser.id === u.id;
+                return (
+                  <div
+                    key={u.id}
+                    onClick={() => handleSelectUser(u)}
+                    className={`user-list-item ${isSelected ? 'selected' : ''}`}
+                  >
+                    <div className="user-avatar">
+                      {u.name ? u.name.substring(0, 2).toUpperCase() : 'US'}
+                    </div>
+                    <div className="user-info">
+                      <div className="user-name" title={u.name}>{u.name}</div>
+                      <div className="user-email" title={u.email}>{u.email}</div>
+                    </div>
+                    <span className={`user-role-badge ${u.role.toLowerCase()}`}>
+                      {u.role === 'ADMIN' ? 'Admin' : u.role === 'SINDICO' ? 'Síndico' : 'Morador'}
+                    </span>
+                  </div>
+                );
+              })}
+              {filteredUsers.length === 0 && (
+                <div className="empty-search-results">
+                  Nenhum usuário encontrado para "{searchTerm}"
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Coluna Direita: Atribuição de Papéis */}
+          <div className="right-panel-container">
             {message && (
-              <div style={{
-                padding: '12px',
-                borderRadius: '8px',
-                marginBottom: '1rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                backgroundColor: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-                color: message.type === 'success' ? '#166534' : '#991b1b',
-              }}>
+              <div className={`message-banner ${message.type}`}>
                 {message.type === 'success' ? <CheckCircle size={18} /> : <ShieldAlert size={18} />}
-                <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{message.text}</span>
+                <span>{message.text}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-main)', marginBottom: '4px' }}>
-                  Buscar Usuário (Nome, Email ou ID)
-                </label>
-                <div style={{ position: 'relative', marginBottom: '8px' }}>
-                  <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setUserId(e.target.value);
-                    }}
-                    onFocus={() => setIsSearchFocused(true)}
-                    onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                    placeholder="Digite para buscar..."
-                    style={{
-                      width: '100%',
-                      padding: '10px 10px 10px 38px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--border-color)',
-                      fontSize: '0.875rem',
-                      transition: 'border-color 0.2s',
-                    }}
-                  />
-                  
-                  {isSearchFocused && users.length > 0 && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 'calc(100% + 4px)',
-                      left: 0,
-                      right: 0,
-                      zIndex: 50,
-                      maxHeight: '260px',
-                      overflowY: 'auto',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius-md)',
-                      backgroundColor: 'var(--bg-surface)',
-                      boxShadow: 'var(--shadow-lg)'
-                    }}>
-                      {filteredUsers.map(u => (
-                        <div 
-                          key={u.id}
-                          onClick={() => {
-                            setUserId(u.id);
-                            setSearchTerm(u.name);
-                            if (u.role === 'ADMIN' || u.role === 'SINDICO' || u.role === 'MORADOR') {
-                              setSelectedRole(u.role);
-                            }
-                            setIsSearchFocused(false);
-                          }}
-                          style={{
-                            padding: '12px 16px',
-                            borderBottom: '1px solid var(--border-light)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            backgroundColor: userId === u.id ? 'var(--bg-hover)' : 'transparent',
-                            transition: 'background-color 0.2s'
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = userId === u.id ? 'var(--bg-hover)' : 'transparent'}
-                        >
-                          <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: '0.875rem' }}>
-                            {u.name ? u.name.substring(0, 2).toUpperCase() : 'US'}
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--text-main)', marginBottom: '2px' }}>{u.name}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.email}</div>
-                          </div>
-                          <div style={{
-                            fontSize: '0.75rem',
-                            fontWeight: 600,
-                            padding: '4px 10px',
-                            borderRadius: 'var(--radius-full)',
-                            backgroundColor: u.role === 'ADMIN' ? 'var(--color-accent-light)' : u.role === 'SINDICO' ? 'var(--status-green-bg)' : 'var(--bg-hover)',
-                            color: u.role === 'ADMIN' ? 'var(--color-accent-hover)' : u.role === 'SINDICO' ? 'var(--status-green)' : 'var(--text-secondary)'
-                          }}>
-                            {u.role}
-                          </div>
+            {!selectedUser ? (
+              <div className="empty-state-card">
+                <Shield size={48} className="empty-shield-icon" />
+                <h3>Nenhum usuário selecionado</h3>
+                <p>Selecione um usuário na lista à esquerda para visualizar seu perfil e alterar suas permissões de acesso no sistema.</p>
+              </div>
+            ) : (
+              <div className="action-panel-card">
+                <div className="card-section-title">Usuário Selecionado</div>
+                
+                <div className="selected-user-profile">
+                  <div className="user-avatar large">
+                    {selectedUser.name ? selectedUser.name.substring(0, 2).toUpperCase() : 'US'}
+                  </div>
+                  <div className="selected-user-meta">
+                    <h4>{selectedUser.name}</h4>
+                    <p>{selectedUser.email}</p>
+                    <div className="current-role-info">
+                      Papel atual:{' '}
+                      <span className={`user-role-badge ${selectedUser.role.toLowerCase()}`}>
+                        {selectedUser.role === 'ADMIN' ? 'Admin' : selectedUser.role === 'SINDICO' ? 'Síndico' : 'Morador'}
+                      </span>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="clear-selection-btn"
+                    onClick={handleClearSelection}
+                  >
+                    Desmarcar
+                  </button>
+                </div>
+
+                <div className="card-section-title" style={{ marginTop: 'var(--space-24)' }}>Novo papel de acesso</div>
+                
+                <form onSubmit={handleSubmit}>
+                  <div className="radio-cards-container">
+                    
+                    {/* Administrador */}
+                    <label className={`radio-card ${selectedRole === 'ADMIN' ? 'active' : ''}`}>
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="ADMIN" 
+                        checked={selectedRole === 'ADMIN'} 
+                        onChange={() => setSelectedRole('ADMIN')} 
+                      />
+                      <div className="radio-indicator">
+                        <div className="radio-dot" />
+                      </div>
+                      <div className="radio-content">
+                        <div className="radio-title">
+                          <ShieldAlert size={16} className="role-icon admin" />
+                          Administrador
                         </div>
-                      ))}
-                      {filteredUsers.length === 0 && (
-                        <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                          Nenhum usuário encontrado para "<span style={{fontWeight: 600}}>{searchTerm}</span>"
+                        <div className="radio-description">Acesso total ao sistema.</div>
+                      </div>
+                    </label>
+
+                    {/* Síndico */}
+                    <label className={`radio-card ${selectedRole === 'SINDICO' ? 'active' : ''}`}>
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="SINDICO" 
+                        checked={selectedRole === 'SINDICO'} 
+                        onChange={() => setSelectedRole('SINDICO')} 
+                      />
+                      <div className="radio-indicator">
+                        <div className="radio-dot" />
+                      </div>
+                      <div className="radio-content">
+                        <div className="radio-title">
+                          <ShieldCheck size={16} className="role-icon sindico" />
+                          Síndico
                         </div>
-                      )}
+                        <div className="radio-description">Gerencia prédios e métricas.</div>
+                      </div>
+                    </label>
+
+                    {/* Morador */}
+                    <label className={`radio-card ${selectedRole === 'MORADOR' ? 'active' : ''}`}>
+                      <input 
+                        type="radio" 
+                        name="role" 
+                        value="MORADOR" 
+                        checked={selectedRole === 'MORADOR'} 
+                        onChange={() => setSelectedRole('MORADOR')} 
+                      />
+                      <div className="radio-indicator">
+                        <div className="radio-dot" />
+                      </div>
+                      <div className="radio-content">
+                        <div className="radio-title">
+                          <User size={16} className="role-icon morador" />
+                          Morador
+                        </div>
+                        <div className="radio-description">Acesso básico a comunicados, reservas e chamados.</div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Confirmação de Segurança */}
+                  {selectedRole !== selectedUser.role && (
+                    <div className="safety-warning-banner">
+                      <span>
+                        ⚠️ Você está alterando o papel de <strong>{selectedUser.name}</strong> de <strong>{selectedUser.role === 'ADMIN' ? 'Administrador' : selectedUser.role === 'SINDICO' ? 'Síndico' : 'Morador'}</strong> para <strong>{selectedRole === 'ADMIN' ? 'Administrador' : selectedRole === 'SINDICO' ? 'Síndico' : 'Morador'}</strong>.
+                      </span>
                     </div>
                   )}
-                </div>
-                
-                {userId && userId !== searchTerm && (
-                  <div style={{ marginTop: '8px', fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                    ID Selecionado: <span style={{ fontFamily: 'monospace' }}>{userId}</span>
-                  </div>
-                )}
+
+                  <button 
+                    type="submit" 
+                    className="primary-btn submit-role-btn" 
+                    disabled={loading || selectedRole === selectedUser.role}
+                  >
+                    <Shield size={18} />
+                    {loading ? 'Salvando...' : 'Salvar alteração'}
+                  </button>
+                </form>
               </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '8px', marginTop: '8px' }}>
-                  Novo Papel (Role)
-                </label>
-                <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-                  
-                  {/* ADMIN Radio */}
-                  <label 
-                    style={{ 
-                      display: 'flex', alignItems: 'flex-start', gap: '16px', padding: '16px', 
-                      border: `2px solid ${selectedRole === 'ADMIN' ? 'var(--color-accent)' : 'var(--border-color)'}`, 
-                      borderRadius: '12px', cursor: 'pointer', 
-                      backgroundColor: selectedRole === 'ADMIN' ? 'var(--color-accent-light)' : 'var(--bg-surface)',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedRole === 'ADMIN' ? '0 4px 12px rgba(79, 70, 229, 0.15)' : 'none'
-                    }}
-                    onMouseEnter={(e) => { if(selectedRole !== 'ADMIN') { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.backgroundColor = 'var(--bg-hover)'; } }}
-                    onMouseLeave={(e) => { if(selectedRole !== 'ADMIN') { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'var(--bg-surface)'; } }}
-                  >
-                    <div style={{ position: 'relative', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${selectedRole === 'ADMIN' ? 'var(--color-accent)' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', transition: 'all 0.2s' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--color-accent)', opacity: selectedRole === 'ADMIN' ? 1 : 0, transition: 'opacity 0.2s' }} />
-                    </div>
-                    <input type="radio" name="role" value="ADMIN" checked={selectedRole === 'ADMIN'} onChange={() => setSelectedRole('ADMIN')} style={{ display: 'none' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <ShieldAlert size={18} color={selectedRole === 'ADMIN' ? 'var(--color-accent)' : '#64748b'} />
-                        <span style={{ fontWeight: 600, fontSize: '1rem', color: selectedRole === 'ADMIN' ? 'var(--color-accent-hover)' : 'var(--text-main)' }}>Administrador</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: selectedRole === 'ADMIN' ? '#4338ca' : 'var(--text-secondary)', lineHeight: 1.5 }}>Acesso irrestrito. Pode criar condomínios e gerenciar permissões de todos os usuários.</div>
-                    </div>
-                  </label>
-
-                  {/* SINDICO Radio */}
-                  <label 
-                    style={{ 
-                      display: 'flex', alignItems: 'flex-start', gap: '16px', padding: '16px', 
-                      border: `2px solid ${selectedRole === 'SINDICO' ? 'var(--color-accent)' : 'var(--border-color)'}`, 
-                      borderRadius: '12px', cursor: 'pointer', 
-                      backgroundColor: selectedRole === 'SINDICO' ? 'var(--color-accent-light)' : 'var(--bg-surface)',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedRole === 'SINDICO' ? '0 4px 12px rgba(79, 70, 229, 0.15)' : 'none'
-                    }}
-                    onMouseEnter={(e) => { if(selectedRole !== 'SINDICO') { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.backgroundColor = 'var(--bg-hover)'; } }}
-                    onMouseLeave={(e) => { if(selectedRole !== 'SINDICO') { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'var(--bg-surface)'; } }}
-                  >
-                    <div style={{ position: 'relative', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${selectedRole === 'SINDICO' ? 'var(--color-accent)' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', transition: 'all 0.2s' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--color-accent)', opacity: selectedRole === 'SINDICO' ? 1 : 0, transition: 'opacity 0.2s' }} />
-                    </div>
-                    <input type="radio" name="role" value="SINDICO" checked={selectedRole === 'SINDICO'} onChange={() => setSelectedRole('SINDICO')} style={{ display: 'none' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <ShieldCheck size={18} color={selectedRole === 'SINDICO' ? 'var(--color-accent)' : '#64748b'} />
-                        <span style={{ fontWeight: 600, fontSize: '1rem', color: selectedRole === 'SINDICO' ? 'var(--color-accent-hover)' : 'var(--text-main)' }}>Síndico</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: selectedRole === 'SINDICO' ? '#4338ca' : 'var(--text-secondary)', lineHeight: 1.5 }}>Pode gerenciar prédios e visualizar métricas financeiras. Não gerencia outros administradores.</div>
-                    </div>
-                  </label>
-
-                  {/* MORADOR Radio */}
-                  <label 
-                    style={{ 
-                      display: 'flex', alignItems: 'flex-start', gap: '16px', padding: '16px', 
-                      border: `2px solid ${selectedRole === 'MORADOR' ? 'var(--color-accent)' : 'var(--border-color)'}`, 
-                      borderRadius: '12px', cursor: 'pointer', 
-                      backgroundColor: selectedRole === 'MORADOR' ? 'var(--color-accent-light)' : 'var(--bg-surface)',
-                      transition: 'all 0.2s ease',
-                      boxShadow: selectedRole === 'MORADOR' ? '0 4px 12px rgba(79, 70, 229, 0.15)' : 'none'
-                    }}
-                    onMouseEnter={(e) => { if(selectedRole !== 'MORADOR') { e.currentTarget.style.borderColor = '#cbd5e1'; e.currentTarget.style.backgroundColor = 'var(--bg-hover)'; } }}
-                    onMouseLeave={(e) => { if(selectedRole !== 'MORADOR') { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.backgroundColor = 'var(--bg-surface)'; } }}
-                  >
-                    <div style={{ position: 'relative', width: '20px', height: '20px', borderRadius: '50%', border: `2px solid ${selectedRole === 'MORADOR' ? 'var(--color-accent)' : '#94a3b8'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '2px', transition: 'all 0.2s' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'var(--color-accent)', opacity: selectedRole === 'MORADOR' ? 1 : 0, transition: 'opacity 0.2s' }} />
-                    </div>
-                    <input type="radio" name="role" value="MORADOR" checked={selectedRole === 'MORADOR'} onChange={() => setSelectedRole('MORADOR')} style={{ display: 'none' }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <User size={18} color={selectedRole === 'MORADOR' ? 'var(--color-accent)' : '#64748b'} />
-                        <span style={{ fontWeight: 600, fontSize: '1rem', color: selectedRole === 'MORADOR' ? 'var(--color-accent-hover)' : 'var(--text-main)' }}>Morador</span>
-                      </div>
-                      <div style={{ fontSize: '0.875rem', color: selectedRole === 'MORADOR' ? '#4338ca' : 'var(--text-secondary)', lineHeight: 1.5 }}>Acesso básico. Visualiza comunicados, reservas e pode abrir chamados para a administração.</div>
-                    </div>
-                  </label>
-
-                </div>
-              </div>
-
-              <button 
-                type="submit" 
-                className="primary-btn" 
-                disabled={loading}
-                style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '8px', opacity: loading ? 0.7 : 1 }}
-              >
-                <Shield size={18} />
-                {loading ? 'Atualizando...' : 'Atualizar Papel de Usuário'}
-              </button>
-            </form>
+            )}
           </div>
+
         </div>
       </div>
+
+      <style>{`
+        /* Grid Layout */
+        .access-control-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: var(--space-24);
+          align-items: start;
+          margin-top: var(--space-8);
+        }
+
+        @media (min-width: 992px) {
+          .access-control-grid {
+            grid-template-columns: 360px 1fr;
+          }
+        }
+
+        /* Left Column: Users List */
+        .users-list-card {
+          background: var(--bg-surface);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: var(--space-20);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .users-column-title {
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin-bottom: var(--space-16);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        /* Search Input Custom */
+        .search-box-container {
+          margin-bottom: var(--space-16);
+        }
+
+        .input-label {
+          display: block;
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          margin-bottom: 6px;
+        }
+
+        .custom-search-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+
+        .custom-search-icon {
+          position: absolute;
+          left: 12px;
+          color: var(--text-light);
+          pointer-events: none;
+        }
+
+        .custom-search-input {
+          width: 100%;
+          height: 40px;
+          padding: 0 12px 0 38px;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          background-color: var(--bg-surface) !important;
+          color: var(--text-main) !important;
+          font-size: 0.875rem;
+          outline: none;
+          transition: all 0.2s ease-in-out;
+        }
+
+        .custom-search-input::placeholder {
+          color: #94a3b8;
+        }
+
+        .custom-search-input:focus {
+          border-color: var(--color-accent);
+          box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        }
+
+        /* Scrollable List */
+        .users-scroll-list {
+          max-height: 460px;
+          overflow-y: auto;
+          margin-top: var(--space-12);
+          padding-right: 4px;
+        }
+
+        .users-scroll-list::-webkit-scrollbar {
+          width: 6px;
+        }
+        .users-scroll-list::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .users-scroll-list::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: var(--radius-full);
+        }
+        .users-scroll-list::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+
+        .user-list-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 10px 12px;
+          border: 1px solid var(--border-light);
+          border-radius: var(--radius-sm);
+          margin-bottom: 8px;
+          cursor: pointer;
+          background-color: var(--bg-surface);
+          transition: all 0.2s ease;
+        }
+
+        .user-list-item:hover {
+          background-color: var(--bg-hover);
+          border-color: #cbd5e1;
+          transform: translateY(-1px);
+        }
+
+        .user-list-item.selected {
+          background-color: #f5f3ff;
+          border-color: var(--color-accent);
+          box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+        }
+
+        .user-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: #e0e7ff;
+          color: var(--color-accent);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 0.8rem;
+          flex-shrink: 0;
+        }
+
+        .user-list-item.selected .user-avatar {
+          background-color: var(--color-accent);
+          color: white;
+        }
+
+        .user-info {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .user-name {
+          font-weight: 600;
+          font-size: 0.85rem;
+          color: var(--text-main);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          margin-bottom: 1px;
+        }
+
+        .user-email {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        /* Role badges */
+        .user-role-badge {
+          font-size: 0.65rem;
+          font-weight: 700;
+          padding: 2px 6px;
+          border-radius: var(--radius-full);
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+        }
+
+        .user-role-badge.admin {
+          background-color: #fee2e2;
+          color: #991b1b;
+        }
+
+        .user-role-badge.sindico {
+          background-color: #dcfce7;
+          color: #166534;
+        }
+
+        .user-role-badge.morador {
+          background-color: #f1f5f9;
+          color: #475569;
+        }
+
+        .empty-search-results {
+          padding: var(--space-24) var(--space-16);
+          text-align: center;
+          color: var(--text-light);
+          font-size: 0.85rem;
+          border: 1px dashed var(--border-color);
+          border-radius: var(--radius-sm);
+        }
+
+        /* Right Column: Panel */
+        .right-panel-container {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-24);
+        }
+
+        /* Empty State Card */
+        .empty-state-card {
+          background: var(--bg-surface);
+          border: 2px dashed var(--border-color);
+          border-radius: var(--radius-md);
+          padding: var(--space-48) var(--space-24);
+          text-align: center;
+          color: var(--text-secondary);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          min-height: 380px;
+        }
+
+        .empty-shield-icon {
+          color: var(--text-light);
+          opacity: 0.4;
+        }
+
+        .empty-state-card h3 {
+          font-size: 1.1rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin: 0;
+        }
+
+        .empty-state-card p {
+          font-size: 0.85rem;
+          color: var(--text-light);
+          max-width: 320px;
+          line-height: 1.5;
+          margin: 0;
+        }
+
+        /* User Selected & Form Styles */
+        .action-panel-card {
+          background: var(--bg-surface);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-md);
+          padding: var(--space-24);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .card-section-title {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--text-light);
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: var(--space-12);
+        }
+
+        .selected-user-profile {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: var(--space-12) var(--space-16);
+          background-color: #f8fafc;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          margin-bottom: var(--space-20);
+        }
+
+        .user-avatar.large {
+          width: 44px;
+          height: 44px;
+          font-size: 1rem;
+          background-color: var(--color-accent);
+          color: white;
+        }
+
+        .selected-user-meta {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .selected-user-meta h4 {
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text-main);
+          margin: 0 0 2px 0;
+        }
+
+        .selected-user-meta p {
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          margin: 0 0 4px 0;
+        }
+
+        .current-role-info {
+          font-size: 0.75rem;
+          color: var(--text-light);
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .clear-selection-btn {
+          font-size: 0.775rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          background: transparent;
+          padding: 5px 10px;
+          border: 1px solid #cbd5e1;
+          border-radius: var(--radius-sm);
+          transition: all 0.2s;
+        }
+
+        .clear-selection-btn:hover {
+          background-color: #f1f5f9;
+          color: var(--text-main);
+          border-color: #94a3b8;
+        }
+
+        /* Radio Cards */
+        .radio-cards-container {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-8);
+          margin-bottom: var(--space-20);
+        }
+
+        .radio-card {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 12px 14px;
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          background-color: var(--bg-surface);
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .radio-card input[type="radio"] {
+          position: absolute;
+          opacity: 0;
+          cursor: pointer;
+        }
+
+        .radio-indicator {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          border: 2px solid #cbd5e1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: 2px;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+
+        .radio-card:hover .radio-indicator {
+          border-color: #94a3b8;
+        }
+
+        .radio-card.active .radio-indicator {
+          border-color: var(--color-accent);
+        }
+
+        .radio-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background-color: var(--color-accent);
+          transform: scale(0);
+          transition: transform 0.2s ease;
+        }
+
+        .radio-card.active .radio-dot {
+          transform: scale(1);
+        }
+
+        .radio-card.active {
+          border-color: var(--color-accent);
+          background-color: #f5f3ff;
+        }
+
+        .radio-content {
+          flex: 1;
+        }
+
+        .radio-title {
+          font-weight: 600;
+          font-size: 0.875rem;
+          color: var(--text-main);
+          margin-bottom: 2px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .radio-card.active .radio-title {
+          color: var(--color-accent-hover);
+        }
+
+        .role-icon {
+          flex-shrink: 0;
+        }
+
+        .role-icon.admin {
+          color: #ef4444;
+        }
+        .role-icon.sindico {
+          color: #10b981;
+        }
+        .role-icon.morador {
+          color: #64748b;
+        }
+
+        .radio-description {
+          font-size: 0.775rem;
+          color: var(--text-secondary);
+          line-height: 1.4;
+        }
+
+        /* Safety Banner */
+        .safety-warning-banner {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 14px;
+          background-color: #fffbeb;
+          border: 1px solid #fef3c7;
+          border-radius: var(--radius-sm);
+          color: #b45309;
+          font-size: 0.8rem;
+          margin-bottom: var(--space-20);
+          line-height: 1.4;
+        }
+
+        /* Message Banner */
+        .message-banner {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 14px;
+          border-radius: var(--radius-sm);
+          font-size: 0.825rem;
+          font-weight: 500;
+          margin-bottom: var(--space-8);
+        }
+
+        .message-banner.success {
+          background-color: #dcfce7;
+          color: #166534;
+          border: 1px solid #bbf7d0;
+        }
+
+        .message-banner.error {
+          background-color: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #fecaca;
+        }
+
+        /* Submit btn */
+        .submit-role-btn {
+          width: 100%;
+          height: 40px;
+          justify-content: center;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+
+        .submit-role-btn:disabled {
+          background-color: #f1f5f9;
+          color: #94a3b8;
+          border-color: #e2e8f0;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+      `}</style>
     </div>
   );
 };
