@@ -451,7 +451,7 @@ export const AdminAuditPage: React.FC = () => {
                     disabled={currentPage === 1}
                     className="audit-nav-page-btn"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={16} color="var(--text-main)" />
                   </button>
                   <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)' }}>
                     Página {currentPage} de {totalPages}
@@ -461,7 +461,7 @@ export const AdminAuditPage: React.FC = () => {
                     disabled={currentPage === totalPages}
                     className="audit-nav-page-btn"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={16} color="var(--text-main)" />
                   </button>
                 </div>
               </div>
@@ -583,7 +583,7 @@ export const AdminAuditPage: React.FC = () => {
                       <Server size={14} style={{ color: 'var(--text-light)', marginTop: '2px' }} />
                       <div>
                         <div className="drawer-meta-label">User Agent (Navegador/Dispositivo)</div>
-                        <div className="drawer-meta-val" style={{ fontSize: '0.775rem', lineHeight: 1.4, wordBreak: 'break-all' }}>
+                        <div className="drawer-meta-val user-agent-box">
                           {selectedLog.userAgent || 'Não disponível'}
                         </div>
                       </div>
@@ -753,9 +753,10 @@ export const AdminAuditPage: React.FC = () => {
           width: 30px;
           height: 30px;
           border-radius: 50%;
-          border: 1px solid var(--border-color);
-          background-color: var(--bg-surface);
+          border: 1px solid var(--border-btn-neutral);
+          background-color: var(--bg-btn-neutral);
           color: var(--text-main);
+          padding: 0;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -764,7 +765,7 @@ export const AdminAuditPage: React.FC = () => {
         }
         .audit-nav-page-btn:hover:not(:disabled) {
           background-color: var(--bg-hover);
-          border-color: #cbd5e1;
+          border-color: var(--color-accent);
         }
         .audit-nav-page-btn:disabled {
           opacity: 0.5;
@@ -919,6 +920,18 @@ export const AdminAuditPage: React.FC = () => {
           padding: var(--space-16) var(--space-24);
           border-top: 1px solid var(--border-color);
           background-color: #f8fafc;
+        }
+
+        .user-agent-box {
+          font-size: 0.75rem;
+          line-height: 1.4;
+          word-break: break-all;
+          font-family: monospace;
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 8px;
+          border-radius: 6px;
+          margin-top: 4px;
         }
       `}</style>
 

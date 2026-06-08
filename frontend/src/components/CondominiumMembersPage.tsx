@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Search, Users, MoreVertical, CheckCircle2 } from 'lucide-react';
+import { ChevronRight, Search, Users, MoreVertical, CheckCircle2, X, Edit2, Trash2 } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
+import UserService from '../services/userService';
+import { CustomSelect } from './CustomSelect';
 import api from '../services/api';
 import '../styles/dashboard.css';
+import '../styles/details.css';
 
 interface Member {
   id: string;
@@ -51,6 +54,26 @@ export const CondominiumMembersPage: React.FC = () => {
   const userRole = localStorage.getItem('role') || 'MORADOR';
   const isAdmin = userRole === 'ADMIN';
 
+  // Context dropdown & modals
+  const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showEditRoleModal, setShowEditRoleModal] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'SINDICO' | 'MORADOR'>('MORADOR');
+  const [updatingRole, setUpdatingRole] = useState(false);
+  const [removingMember, setRemovingMember] = useState(false);
+
+  useEffect(() => {
+    if (showRemoveModal || showEditRoleModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showRemoveModal, showEditRoleModal]);
+
   const showToast = (text: string) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, text }]);
@@ -82,16 +105,24 @@ export const CondominiumMembersPage: React.FC = () => {
     fetchData();
   }, [condominiumId]);
 
-  // Click outside to close dropdown
+  // Click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
+      const target = event.target as HTMLElement;
+      if (
+        activeDropdownId && 
+        !target.closest('.members-action-btn') && 
+        !target.closest('.members-dropdown-menu')
+      ) {
+        setActiveDropdownId(null);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [activeDropdownId]);
 
   const handleAddMember = async (user: UserData) => {
     if (!condominiumId) return;
@@ -99,7 +130,7 @@ export const CondominiumMembersPage: React.FC = () => {
     setShowDropdown(false);
     try {
       await CondominiumService.addMember(condominiumId, user.id);
-      showToast(`✓ ${user.name} vinculado com sucesso`);
+      showToast(`${user.name} vinculado com sucesso`);
       setSearchTerm('');
       await fetchData();
     } catch (error: any) {
@@ -110,17 +141,43 @@ export const CondominiumMembersPage: React.FC = () => {
     }
   };
 
-  const handleRemoveMember = async (userId: string, userName: string) => {
-    if (!condominiumId) return;
-    if (!window.confirm(`Tem certeza que deseja remover ${userName} do condomínio?`)) return;
-
+  const handleEditRoleConfirm = async () => {
+    if (!condominiumId || !selectedMember) return;
+    const realUserId = selectedMember.userId || selectedMember.id;
+    if (!realUserId) return;
+    
+    setUpdatingRole(true);
     try {
-      await CondominiumService.removeMember(condominiumId, userId);
-      showToast(`✓ Morador removido`);
+      await UserService.changeUserRole(realUserId, selectedRole);
+      showToast(`Papel de ${selectedMember.userName || selectedMember.name} alterado para ${getRoleLabel(selectedRole)} com sucesso`);
+      setShowEditRoleModal(false);
+      setSelectedMember(null);
+      await fetchData();
+    } catch (error: any) {
+      console.error('Erro ao alterar papel do morador:', error);
+      alert(error.message || 'Erro ao alterar papel do morador.');
+    } finally {
+      setUpdatingRole(false);
+    }
+  };
+
+  const handleRemoveConfirm = async () => {
+    if (!condominiumId || !selectedMember) return;
+    const realUserId = selectedMember.userId || selectedMember.id;
+    if (!realUserId) return;
+
+    setRemovingMember(true);
+    try {
+      await CondominiumService.removeMember(condominiumId, realUserId);
+      showToast(`Morador ${selectedMember.userName || selectedMember.name} removido com sucesso`);
+      setShowRemoveModal(false);
+      setSelectedMember(null);
       await fetchData();
     } catch (error: any) {
       console.error('Erro ao remover morador:', error);
       alert('Erro ao remover morador. Verifique suas permissões.');
+    } finally {
+      setRemovingMember(false);
     }
   };
 
@@ -153,6 +210,24 @@ export const CondominiumMembersPage: React.FC = () => {
     return 'Morador';
   };
 
+  const getInitials = (name: string) => {
+    const cleanName = name.trim();
+    if (!cleanName) return '?';
+    const parts = cleanName.split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const getAvatarStyle = (role: string) => {
+    if (role === 'ADMIN') {
+      return { backgroundColor: 'var(--status-red-bg)', color: 'var(--status-red)' };
+    }
+    if (role === 'SINDICO') {
+      return { backgroundColor: 'var(--status-green-bg)', color: 'var(--status-green)' };
+    }
+    return { backgroundColor: 'var(--bg-surface-2)', color: 'var(--text-secondary)' };
+  };
+
   if (loading) {
     return <div className="members-container"><p style={{ color: '#6B7280' }}>Carregando dados...</p></div>;
   }
@@ -164,6 +239,12 @@ export const CondominiumMembersPage: React.FC = () => {
         <div key={toast.id} className="members-toast" style={{ top: `${24 + index * 60}px` }}>
           <CheckCircle2 size={18} color="#10B981" />
           <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>{toast.text}</span>
+          <button 
+            className="members-toast-close" 
+            onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+          >
+            <X size={14} />
+          </button>
         </div>
       ))}
 
@@ -176,9 +257,16 @@ export const CondominiumMembersPage: React.FC = () => {
         <span style={{ color: 'var(--text-main)' }}>Moradores</span>
       </div>
 
-      <div className="members-page-header">
-        <h1 className="members-title">Gerenciar moradores</h1>
-        <p className="members-subtitle">Adicione, remova e gerencie moradores vinculados ao condomínio.</p>
+      <div className="members-page-header" style={{ padding: '8px 0 20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Users size={22} color="var(--color-accent)" />
+            </div>
+            <h1 className="members-title" style={{ margin: 0 }}>Gerenciar moradores</h1>
+          </div>
+          <p className="members-subtitle">Adicione, remova e gerencie moradores vinculados ao condomínio.</p>
+        </div>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
@@ -218,7 +306,7 @@ export const CondominiumMembersPage: React.FC = () => {
                   <tr>
                     <th>Nome</th>
                     <th>Email</th>
-                    <th>Role</th>
+                    <th>Papel</th>
                     {isAdmin && <th style={{ textAlign: 'right' }}>Ações</th>}
                   </tr>
                 </thead>
@@ -231,7 +319,25 @@ export const CondominiumMembersPage: React.FC = () => {
 
                     return (
                     <tr key={member.id}>
-                      <td style={{ fontWeight: 500 }}>{memberName}</td>
+                      <td style={{ fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            flexShrink: 0,
+                            ...getAvatarStyle(memberRole)
+                          }}>
+                            {getInitials(memberName)}
+                          </div>
+                          <span>{memberName}</span>
+                        </div>
+                      </td>
                       <td>{memberEmail}</td>
                       <td>
                         <span className={getRoleBadgeClass(memberRole)}>
@@ -244,19 +350,40 @@ export const CondominiumMembersPage: React.FC = () => {
                             <button 
                               className="members-action-btn"
                               onClick={() => {
-                                // Simples menu de contexto improvisado para a refatoração.
-                                // Em produção idealmente usaríamos um componente Dropdown Menu real (ex: Radix UI)
-                                const opt = window.prompt("Digite 1 para Remover ou 2 para Editar Role:");
-                                if (opt === '1') {
-                                  handleRemoveMember(realUserId, memberName);
-                                } else if (opt === '2') {
-                                  alert("Ação de Editar Role em breve!");
-                                }
+                                setActiveDropdownId(activeDropdownId === realUserId ? null : realUserId);
                               }}
                               title="Ações"
                             >
                               <MoreVertical size={16} />
                             </button>
+                            
+                            {activeDropdownId === realUserId && (
+                              <div className="members-dropdown-menu">
+                                <button 
+                                  className="members-dropdown-item"
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setSelectedRole(memberRole as 'ADMIN' | 'SINDICO' | 'MORADOR');
+                                    setShowEditRoleModal(true);
+                                    setActiveDropdownId(null);
+                                  }}
+                                >
+                                  <Edit2 size={14} />
+                                  Editar papel
+                                </button>
+                                <button 
+                                  className="members-dropdown-item delete"
+                                  onClick={() => {
+                                    setSelectedMember(member);
+                                    setShowRemoveModal(true);
+                                    setActiveDropdownId(null);
+                                  }}
+                                >
+                                  <Trash2 size={14} />
+                                  Remover morador
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </td>
                       )}
@@ -270,7 +397,7 @@ export const CondominiumMembersPage: React.FC = () => {
         </div>
 
         {/* Card 2: Vincular Novo Morador */}
-        <div className="members-card" style={{ maxWidth: '600px' }}>
+        <div className="members-card">
           <div style={{ marginBottom: '20px' }}>
             <h2 className="members-card-title" style={{ marginBottom: '4px' }}>Vincular novo morador</h2>
             <p className="members-subtitle">Busque usuários cadastrados para vinculá-los ao condomínio.</p>
@@ -297,8 +424,8 @@ export const CondominiumMembersPage: React.FC = () => {
                 top: 'calc(100% + 8px)',
                 left: 0,
                 right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #ECECEC',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '12px',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                 zIndex: 10,
@@ -311,13 +438,13 @@ export const CondominiumMembersPage: React.FC = () => {
                       key={user.id}
                       style={{
                         padding: '12px 16px',
-                        borderBottom: '1px solid #F8FAFC',
+                        borderBottom: '1px solid var(--border-color)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         cursor: 'pointer'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-hover)'}
                       onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       onClick={() => handleAddMember(user)}
                     >
@@ -325,7 +452,7 @@ export const CondominiumMembersPage: React.FC = () => {
                         {/* Avatar genérico */}
                         <div style={{ 
                           width: '32px', height: '32px', borderRadius: '50%', 
-                          backgroundColor: '#EEF2FF', color: '#4338CA', 
+                          backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)', 
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '12px', fontWeight: 600
                         }}>
@@ -333,7 +460,7 @@ export const CondominiumMembersPage: React.FC = () => {
                         </div>
                         <div>
                           <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>{user.name}</div>
-                          <div style={{ fontSize: '12px', color: '#6B7280' }}>{user.email}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-light)' }}>{user.email}</div>
                         </div>
                       </div>
                       
@@ -361,6 +488,119 @@ export const CondominiumMembersPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Modal: Editar Papel */}
+      {showEditRoleModal && selectedMember && (
+        <div className="modal-overlay" onClick={() => setShowEditRoleModal(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Editar papel do morador</h3>
+              <button className="modal-close-btn" onClick={() => setShowEditRoleModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{
+                backgroundColor: 'var(--bg-surface-2)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '12px',
+                padding: '16px',
+                marginBottom: '8px'
+              }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize: '14px' }}>
+                  {selectedMember.userName || selectedMember.name}
+                </div>
+                <div style={{ color: 'var(--text-light)', fontSize: '12px', marginTop: '4px' }}>
+                  {selectedMember.userEmail || selectedMember.email}
+                </div>
+              </div>
+              
+              <div className="modal-input-group">
+                <label className="modal-label">Papel</label>
+                <CustomSelect
+                  value={selectedRole}
+                  onChange={(value) => setSelectedRole(value as 'ADMIN' | 'SINDICO' | 'MORADOR')}
+                  options={[
+                    { value: 'MORADOR', label: 'Morador' },
+                    { value: 'SINDICO', label: 'Síndico' },
+                    { value: 'ADMIN', label: 'Administrador' }
+                  ]}
+                />
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="action-btn" 
+                onClick={() => setShowEditRoleModal(false)}
+                disabled={updatingRole}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="modern-primary-btn" 
+                onClick={handleEditRoleConfirm}
+                disabled={updatingRole}
+              >
+                {updatingRole ? 'Salvando...' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Remover Morador */}
+      {showRemoveModal && selectedMember && (
+        <div className="modal-overlay" onClick={() => setShowRemoveModal(false)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Remover morador</h3>
+              <button className="modal-close-btn" onClick={() => setShowRemoveModal(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                Tem certeza que deseja remover <strong>{selectedMember.userName || selectedMember.name}</strong> do condomínio?
+              </p>
+              <div style={{
+                backgroundColor: 'var(--status-red-bg)',
+                border: '1px solid var(--status-red-border)',
+                borderRadius: '12px',
+                padding: '12px 16px',
+                color: 'var(--status-red)',
+                fontSize: '13px',
+                lineHeight: 1.4,
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'flex-start',
+                marginTop: '8px'
+              }}>
+                <span style={{ fontSize: '16px' }}>⚠️</span>
+                <span>Esta ação removerá o acesso do usuário às informações e áreas comuns deste condomínio.</span>
+              </div>
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                className="action-btn" 
+                onClick={() => setShowRemoveModal(false)}
+                disabled={removingMember}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="modern-primary-btn" 
+                style={{ backgroundColor: '#dc2626' }}
+                onClick={handleRemoveConfirm}
+                disabled={removingMember}
+              >
+                {removingMember ? 'Removendo...' : 'Remover'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

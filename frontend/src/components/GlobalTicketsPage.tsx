@@ -92,6 +92,17 @@ export const GlobalTicketsPage: React.FC = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     const [condoNames, setCondoNames] = useState<string[]>([]);
 
+    useEffect(() => {
+        if (selectedTicket) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [selectedTicket]);
+
     // Extra Filters States
     const [showExtraFilters, setShowExtraFilters] = useState(false);
     const [filterCondo, setFilterCondo] = useState('');
@@ -475,7 +486,7 @@ export const GlobalTicketsPage: React.FC = () => {
                                         disabled={currentPage === 1}
                                         className="ticket-nav-page-btn"
                                     >
-                                        <ChevronLeft size={16} />
+                                        <ChevronLeft size={16} color="var(--text-main)" />
                                     </button>
                                     <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-main)' }}>
                                         Página {currentPage} de {totalPages}
@@ -485,7 +496,7 @@ export const GlobalTicketsPage: React.FC = () => {
                                         disabled={currentPage === totalPages}
                                         className="ticket-nav-page-btn"
                                     >
-                                        <ChevronRight size={16} />
+                                        <ChevronRight size={16} color="var(--text-main)" />
                                     </button>
                                 </div>
                             </div>
@@ -534,7 +545,7 @@ export const GlobalTicketsPage: React.FC = () => {
                     justify-content: space-between;
                     color: var(--text-main);
                     font-size: 0.875rem;
-                    font-weight: 500;
+                    font-weight: 400;
                     cursor: pointer;
                     outline: none;
                     transition: all 0.2s ease-in-out;
@@ -771,9 +782,10 @@ export const GlobalTicketsPage: React.FC = () => {
                     width: 30px;
                     height: 30px;
                     border-radius: 50%;
-                    border: 1px solid var(--border-color);
-                    background-color: var(--bg-surface);
+                    border: 1px solid var(--border-btn-neutral);
+                    background-color: var(--bg-btn-neutral);
                     color: var(--text-main);
+                    padding: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -783,7 +795,7 @@ export const GlobalTicketsPage: React.FC = () => {
                 
                 .ticket-nav-page-btn:hover:not(:disabled) {
                     background-color: var(--bg-hover);
-                    border-color: #cbd5e1;
+                    border-color: var(--color-accent);
                 }
                 
                 .ticket-nav-page-btn:disabled {

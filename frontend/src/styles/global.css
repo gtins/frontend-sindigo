@@ -17,6 +17,7 @@ button {
     cursor: pointer;
     border: none;
     font-family: inherit;
+    font-weight: inherit;
 }
 
 input {

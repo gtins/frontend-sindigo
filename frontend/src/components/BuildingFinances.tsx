@@ -51,7 +51,7 @@ export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data }) => {
                     </div>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="secondary-btn" style={{ background: 'white', border: '1px solid #e2e8f0' }}>
+                        <button className="secondary-btn" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
                             <Download size={16} />
                             Exportar (CSV)
                         </button>
@@ -158,8 +158,14 @@ export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data }) => {
                             <div className="section-header">
                                 <h3 className="section-title">Resumo do mês</h3>
                                 <div className="legend-dots">
-                                    <span className="legend-dot green"></span> Depósitos
-                                    <span className="legend-dot red"></span> Compras
+                                    <span className="legend-item">
+                                        <span className="legend-dot green"></span>
+                                        Depósitos
+                                    </span>
+                                    <span className="legend-item">
+                                        <span className="legend-dot red"></span>
+                                        Compras
+                                    </span>
                                 </div>
                             </div>
 

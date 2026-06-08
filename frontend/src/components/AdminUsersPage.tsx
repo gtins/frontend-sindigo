@@ -96,8 +96,8 @@ export const AdminUsersPage: React.FC = () => {
               <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.length}</span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Usuários cadastrados</span>
             </div>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Users size={20} color="#7c3aed" />
+            <div className="stat-icon-violet" style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Users size={20} color="currentColor" />
             </div>
           </div>
           
@@ -107,8 +107,8 @@ export const AdminUsersPage: React.FC = () => {
               <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'ADMIN').length}</span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Acesso total</span>
             </div>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldAlert size={20} color="#1d4ed8" />
+            <div className="stat-icon-blue" style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldAlert size={20} color="currentColor" />
             </div>
           </div>
 
@@ -118,8 +118,8 @@ export const AdminUsersPage: React.FC = () => {
               <span style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1 }}>{users.filter(u => u.role === 'SINDICO').length}</span>
               <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '4px' }}>Gestores de condomínio</span>
             </div>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#ecfeff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={20} color="#0891b2" />
+            <div className="stat-icon-cyan" style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ShieldCheck size={20} color="currentColor" />
             </div>
           </div>
         </div>
@@ -801,6 +801,71 @@ export const AdminUsersPage: React.FC = () => {
           border-color: #e2e8f0;
           cursor: not-allowed;
           box-shadow: none;
+        }
+
+        /* Estilos específicos das estatísticas de Acesso */
+        .stat-icon-violet {
+          background-color: #f5f3ff;
+          color: #7c3aed;
+        }
+        .stat-icon-blue {
+          background-color: #dbeafe;
+          color: #1d4ed8;
+        }
+        .stat-icon-cyan {
+          background-color: #ecfeff;
+          color: #0891b2;
+        }
+
+        /* Dark Mode Overrides */
+        .dark .stat-icon-violet {
+          background-color: rgba(124, 58, 237, 0.15) !important;
+          color: #a78bfa !important;
+        }
+        .dark .stat-icon-blue {
+          background-color: rgba(29, 78, 216, 0.15) !important;
+          color: #60a5fa !important;
+        }
+        .dark .stat-icon-cyan {
+          background-color: rgba(8, 145, 178, 0.15) !important;
+          color: #67e8f9 !important;
+        }
+        .dark .user-role-badge.admin {
+          background-color: rgba(239, 68, 68, 0.15) !important;
+          color: #f87171 !important;
+        }
+        .dark .user-role-badge.sindico {
+          background-color: rgba(16, 185, 129, 0.15) !important;
+          color: #34d399 !important;
+        }
+        .dark .user-role-badge.morador {
+          background-color: rgba(148, 163, 184, 0.15) !important;
+          color: #94a3b8 !important;
+        }
+        .dark .selected-user-profile {
+          background-color: var(--bg-surface-2) !important;
+          border-color: var(--border-color) !important;
+        }
+        .dark .safety-warning-banner {
+          background-color: rgba(245, 158, 11, 0.1) !important;
+          border-color: rgba(245, 158, 11, 0.2) !important;
+          color: #fbbf24 !important;
+        }
+        .dark .user-avatar {
+          background-color: rgba(99, 102, 241, 0.15) !important;
+          color: var(--color-primary) !important;
+        }
+        .dark .user-avatar.large {
+          background-color: var(--color-primary) !important;
+          color: white !important;
+        }
+        .dark .user-list-item.selected {
+          background-color: rgba(99, 102, 241, 0.15) !important;
+          border-color: var(--color-accent) !important;
+        }
+        .dark .radio-card.active {
+          background-color: rgba(99, 102, 241, 0.1) !important;
+          border-color: var(--color-accent) !important;
         }
       `}</style>
     </div>

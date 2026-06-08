@@ -17,8 +17,8 @@ export const BuildingCard: React.FC<BuildingCardProps> = ({ data, onClick }) => 
                     <div className="building-icon-avatar">
                         <Hotel size={16} />
                     </div>
-                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {data.name === 'a' ? 'Condomínio A' : data.name}
+                    <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {data.name === 'a' ? 'Condomínio Mare di Capri' : data.name}
                     </h3>
                 </div>
                 <StatusBadge

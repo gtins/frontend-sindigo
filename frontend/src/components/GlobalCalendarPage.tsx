@@ -450,6 +450,78 @@ export const GlobalCalendarPage: React.FC = () => {
                     color: var(--color-accent-hover);
                     box-shadow: var(--shadow-sm);
                 }
+
+                /* Dark Mode overrides */
+                .dark .calendar-container {
+                    background: var(--bg-surface) !important;
+                    border-color: var(--border-color) !important;
+                }
+                .dark .calendar-header-row {
+                    background-color: var(--bg-surface-2) !important;
+                    border-bottom-color: var(--border-color) !important;
+                }
+                .dark .calendar-header-cell {
+                    color: var(--text-secondary) !important;
+                }
+                .dark .calendar-grid {
+                    background-color: var(--border-color) !important;
+                }
+                .dark .calendar-cell {
+                    background-color: var(--bg-surface) !important;
+                }
+                .dark .calendar-cell.empty {
+                    background-color: var(--bg-body) !important;
+                }
+                .dark .month-nav-container {
+                    background-color: var(--bg-surface) !important;
+                    border-color: var(--border-color) !important;
+                }
+                .dark .calendar-filter-group {
+                    background-color: var(--bg-input) !important;
+                    border-color: var(--border-color) !important;
+                }
+                .dark .filter-tab.active {
+                    background-color: var(--color-accent) !important;
+                    color: white !important;
+                }
+                .dark .filter-tab:not(.active) {
+                    color: var(--text-secondary) !important;
+                }
+                .dark .filter-tab:not(.active):hover {
+                    color: var(--text-main) !important;
+                }
+                
+                /* Event colors in Dark Mode */
+                .dark .act-event {
+                    background-color: rgba(59, 130, 246, 0.15) !important;
+                    color: #60a5fa !important;
+                    border-color: rgba(59, 130, 246, 0.25) !important;
+                    border-left-color: #3b82f6 !important;
+                }
+                .dark .act-event:hover {
+                    border-color: rgba(59, 130, 246, 0.45) !important;
+                    background-color: rgba(59, 130, 246, 0.25) !important;
+                }
+                .dark .tkt-event {
+                    background-color: rgba(239, 68, 68, 0.15) !important;
+                    color: #f87171 !important;
+                    border-color: rgba(239, 68, 68, 0.25) !important;
+                    border-left-color: #ef4444 !important;
+                }
+                .dark .tkt-event:hover {
+                    border-color: rgba(239, 68, 68, 0.45) !important;
+                    background-color: rgba(239, 68, 68, 0.25) !important;
+                }
+                .dark .res-event {
+                    background-color: rgba(245, 158, 11, 0.15) !important;
+                    color: #fbbf24 !important;
+                    border-color: rgba(245, 158, 11, 0.25) !important;
+                    border-left-color: #f59e0b !important;
+                }
+                .dark .res-event:hover {
+                    border-color: rgba(245, 158, 11, 0.45) !important;
+                    background-color: rgba(245, 158, 11, 0.25) !important;
+                }
             `}</style>
 
             <ItemDetailsModal

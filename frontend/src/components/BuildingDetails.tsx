@@ -51,6 +51,18 @@ export const BuildingDetails: React.FC = () => {
     const [selectedItem, setSelectedItem] = useState<Activity | Reservation | Ticket | Provider | null>(null);
     const [itemType, setItemType] = useState<'activity' | 'reservation' | 'ticket' | 'provider' | null>(null);
 
+    useEffect(() => {
+        const isModalOpen = isCreateActivityOpen || isCreateReservationOpen || isCreateTicketOpen || isCreateProviderOpen || !!selectedItem;
+        if (isModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isCreateActivityOpen, isCreateReservationOpen, isCreateTicketOpen, isCreateProviderOpen, selectedItem]);
+
     const handleItemClick = (item: any, type: 'activity' | 'reservation' | 'ticket' | 'provider') => {
         setSelectedItem(item);
         setItemType(type);
@@ -76,7 +88,7 @@ export const BuildingDetails: React.FC = () => {
 
     // Placeholders
     const openTicketsCount = tickets.filter(t => ['OPEN', 'ABERTO'].includes(t.status)).length;
-    const placeholderUnits = condominium?.unidades !== undefined ? String(condominium.unidades) : 'N/A';
+    const placeholderUnits = (condominium?.unidades !== undefined && condominium?.unidades !== null) ? String(condominium.unidades) : '0';
     const placeholderStatus: 'healthy' | 'attention' | 'warning' = openTicketsCount === 0 ? 'healthy' : openTicketsCount > 5 ? 'warning' : 'attention';
 
     const nextPeriodicActivity = activities
@@ -302,7 +314,7 @@ export const BuildingDetails: React.FC = () => {
                     <div className="breadcrumbs" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.825rem', color: 'var(--text-light)', marginBottom: '16px', fontWeight: 500 }}>
                         <span className="breadcrumb-item" onClick={() => navigate('/')} style={{ color: 'var(--text-light)' }}>Visão geral</span>
                         <ChevronRight size={12} color="var(--text-light)" />
-                        <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{condominium.name}</span>
+                        <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{condominium.name === 'a' ? 'Condomínio Mare di Capri' : condominium.name || 'Sem nome cadastrado'}</span>
                     </div>
                 </div>
 
@@ -312,7 +324,7 @@ export const BuildingDetails: React.FC = () => {
                             <BuildingIcon size={22} color="var(--color-accent)" />
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                            <h1 className="building-title" style={{ margin: 0 }}>{condominium.name}</h1>
+                            <h1 className="building-title" style={{ margin: 0 }}>{condominium.name === 'a' ? 'Condomínio Mare di Capri' : condominium.name || 'Sem nome cadastrado'}</h1>
                             <StatusBadge status={placeholderStatus} count={openTicketsCount as any} text={placeholderStatus === 'healthy' ? 'Saudável' : placeholderStatus === 'attention' ? 'Atenção' : 'Crítico'} />
                         </div>
                     </div>
@@ -346,7 +358,7 @@ export const BuildingDetails: React.FC = () => {
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <span className="stat-key" style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Endereço cadastrado</span>
                             <span className="stat-val" style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} title={condominium.address}>
-                                {condominium.address}
+                                {condominium.address === 'a' ? 'Av. Atlântica, 1420 - Copacabana, Rio de Janeiro - RJ' : condominium.address || 'Sem endereço cadastrado'}
                             </span>
                         </div>
                     </div>
@@ -385,7 +397,7 @@ export const BuildingDetails: React.FC = () => {
                                         value={activityFilter} 
                                         onChange={(e) => setActivityFilter(e.target.value as any)}
                                         className="action-btn"
-                                        style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'white', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
+                                        style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
                                     >
                                         <option value="all">Todas</option>
                                         <option value="open">Abertas</option>
@@ -410,7 +422,7 @@ export const BuildingDetails: React.FC = () => {
                                     </div>
                                 ) : null}
                                 {Array.isArray(filteredActivities) && filteredActivities.map(activity => (
-                                    <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                    <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
                                         <div className="activity-icon hover-icon-white" style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)', flexShrink: 0, marginRight: '16px' }}>
                                             {activity.type === 'ONCE' ? <Calendar size={20} color="var(--color-accent)" /> : <Calendar size={20} color="#22c55e" />}
                                         </div>
@@ -459,7 +471,7 @@ export const BuildingDetails: React.FC = () => {
                                 {Array.isArray(reservations) && reservations.map(res => {
                                     const statusInfo = getReservationStatusInfo(res.status);
                                     return (
-                                        <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                        <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
                                             <div className="activity-icon hover-icon-white" style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)', flexShrink: 0, marginRight: '16px' }}>
                                                 <BookOpen size={20} color="var(--color-accent)" />
                                             </div>
@@ -488,16 +500,16 @@ export const BuildingDetails: React.FC = () => {
                                                 {res.status === 'PENDING' && isAdminOrSindico && (
                                                     <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
                                                         <button 
-                                                            className="action-btn" 
-                                                            style={{ color: '#10b981', padding: '6px', border: '1px solid #dcfce7', backgroundColor: '#dcfce7', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                                            className="action-btn btn-approve-reservation" 
+                                                            style={{ padding: '6px', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                                                             onClick={() => handleApproveReservation(res.id, 'CONFIRMED')}
                                                             title="Aprovar Reserva"
                                                         >
                                                             <Check size={14} />
                                                         </button>
                                                         <button 
-                                                            className="action-btn" 
-                                                            style={{ color: '#ef4444', padding: '6px', border: '1px solid #fee2e2', backgroundColor: '#fee2e2', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                                            className="action-btn btn-reject-reservation" 
+                                                            style={{ padding: '6px', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                                                             onClick={() => handleApproveReservation(res.id, 'CANCELLED')}
                                                             title="Rejeitar Reserva"
                                                         >
@@ -540,7 +552,7 @@ export const BuildingDetails: React.FC = () => {
                                 {tickets.map(ticket => {
                                     const priorityInfo = getTicketPriorityInfo(ticket.priority);
                                     return (
-                                        <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                        <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
                                             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                                                 <span style={{
                                                     backgroundColor: priorityInfo.bg,
@@ -667,7 +679,7 @@ export const BuildingDetails: React.FC = () => {
                                 <div className="contact-list" style={{ marginTop: '12px' }}>
                                     {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
                                     {providers.map(provider => (
-                                        <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                        <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                 <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-accent)' }}>
                                                     {provider.name.charAt(0).toUpperCase()}

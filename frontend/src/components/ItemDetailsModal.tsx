@@ -281,7 +281,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
 
     // Helper for rendering key-value rows
     const renderRow = (label: string, value: React.ReactNode) => (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border-color)', gap: '16px' }}>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
             <span style={{ fontSize: '0.925rem', fontWeight: 600, color: 'var(--text-main)', textAlign: 'right' }}>{value || '-'}</span>
         </div>
@@ -336,7 +336,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                 {ticket.closedAt && renderRow('Encerramento', new Date(ticket.closedAt).toLocaleString('pt-BR'))}
                 {ticket.closingNotes && renderRow('Observações de encerramento', ticket.closingNotes)}
                 
-                <div style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+                <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                     <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fotos de evidência</h4>
                     {loadingAttachments ? (
                         <span style={{ fontSize: '0.825rem', color: 'var(--text-light)' }}>Carregando fotos...</span>
@@ -350,7 +350,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                     onClick={() => handleViewAttachment(att.id)}
                                     style={{
                                         cursor: 'pointer',
-                                        border: '1px solid #cbd5e1',
+                                        border: '1px solid var(--border-color)',
                                         borderRadius: '12px',
                                         overflow: 'hidden',
                                         width: '80px',
@@ -359,7 +359,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        backgroundColor: '#f8fafc',
+                                        backgroundColor: 'var(--bg-hover)',
                                         transition: 'all 0.2s'
                                     }}
                                     className="clickable-item"
@@ -405,7 +405,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                      provider.serviceType === 'GARDENER' ? 'Jardineiro' : 
                                      provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros')}
                                      
-                <div style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                     <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>Atividades vinculadas</h3>
                     {loadingActivities ? (
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Carregando atividades...</div>
@@ -420,9 +420,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                 return (
                                     <div key={actId} style={{ 
                                         padding: '16px', 
-                                        border: '1px solid #e2e8f0', 
+                                        border: '1px solid var(--border-color)', 
                                         borderRadius: '16px', 
-                                        backgroundColor: '#f8fafc',
+                                        backgroundColor: 'var(--bg-surface-2)',
                                         display: 'flex',
                                         flexDirection: 'column',
                                         gap: '8px'
@@ -448,7 +448,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         <div style={{ 
                                             marginTop: '8px', 
                                             paddingTop: '8px', 
-                                            borderTop: '1px dashed #cbd5e1',
+                                            borderTop: '1px dashed var(--border-color)',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             gap: '8px'
@@ -482,7 +482,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     {attachments.map(att => (
-                                                        <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                        <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
                                                             <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleViewActivityInvoice(att.id)}>
                                                                 📄 {att.name || `Anexo-${att.id.substring(0, 8)}`}
                                                             </span>
@@ -528,7 +528,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                     {content}
                     
                     {isClosing && (
-                        <div style={{ marginTop: '24px', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <div style={{ marginTop: '24px', padding: '20px', backgroundColor: 'var(--bg-surface-2)', borderRadius: '16px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginTop: 0, marginBottom: 0 }}>Encerrar {type === 'ticket' ? 'chamado' : 'atividade'}</h3>
                             
                             <div className="modal-input-group">
@@ -580,9 +580,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         disabled={isSubmitting}
                                     />
                                     {closingFiles.length > 0 && (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', backgroundColor: 'var(--bg-surface-2)', padding: '12px', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
                                             {closingFiles.map((file, idx) => (
-                                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-surface)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.8rem' }}>
                                                     <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '280px', fontWeight: 500, color: 'var(--text-main)' }}>{file.name}</span>
                                                     <button 
                                                         type="button" 
@@ -609,7 +609,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                     )}
                 </div>
                 
-                <div className="modal-footer" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+                <div className="modal-footer" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
                     {isAdminOrSindico && (type === 'activity' || type === 'ticket') && !isClosing && 
                      !['COMPLETED', 'CANCELLED', 'RESOLVED', 'CLOSED', 'RESOLVIDO', 'FECHADO'].includes((item as any).status) && (
                         <button onClick={() => setIsClosing(true)} className="secondary-btn" style={{ height: '42px', borderRadius: '12px', border: '1px solid #ef4444', color: '#ef4444', marginRight: 'auto' }}>Encerrar</button>

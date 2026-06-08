@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
@@ -23,6 +23,17 @@ function AppLayout() {
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (isCreateModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isCreateModalOpen]);
 
   return (
     <div className="dashboard-container">
@@ -51,6 +62,15 @@ function AppLayout() {
 }
 
 function App() {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('sindigo-theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

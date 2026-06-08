@@ -44,8 +44,8 @@ export const TransactionChartModal: React.FC<TransactionChartModalProps> = ({ ty
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
                 <div style={headerStyle}>
                     <div>
-                        <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>{title}</h2>
-                        <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: '#64748b' }}>Evolução por dia de transação</p>
+                        <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-main)' }}>{title}</h2>
+                        <p style={{ margin: '4px 0 0', fontSize: '0.875rem', color: 'var(--text-light)' }}>Evolução por dia de transação</p>
                     </div>
                     <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
                 </div>
@@ -104,7 +104,7 @@ export const TransactionChartModal: React.FC<TransactionChartModalProps> = ({ ty
 const overlayStyle: React.CSSProperties = {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -112,11 +112,12 @@ const overlayStyle: React.CSSProperties = {
 };
 
 const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '12px',
     width: '100%',
     maxWidth: '550px',
     padding: '24px',
+    border: '1px solid var(--border-color)',
     boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
 };
 
@@ -128,10 +129,10 @@ const headerStyle: React.CSSProperties = {
 };
 
 const closeBtnStyle: React.CSSProperties = {
-    background: '#f1f5f9',
+    background: 'var(--bg-hover)',
     border: 'none',
     cursor: 'pointer',
-    color: '#64748b',
+    color: 'var(--text-secondary)',
     padding: '6px',
     borderRadius: '50%',
     display: 'flex',
@@ -142,7 +143,7 @@ const closeBtnStyle: React.CSSProperties = {
 const chartContainerStyle: React.CSSProperties = {
     height: '250px',
     width: '100%',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid var(--border-color)',
     position: 'relative'
 };
 
@@ -170,8 +171,9 @@ const barColumnStyle: React.CSSProperties = {
 const tooltipStyle: React.CSSProperties = {
     position: 'absolute',
     top: '-35px',
-    backgroundColor: '#1e293b',
-    color: '#fff',
+    backgroundColor: 'var(--bg-surface-2)',
+    color: 'var(--text-main)',
+    border: '1px solid var(--border-color)',
     padding: '4px 8px',
     borderRadius: '4px',
     fontSize: '0.75rem',
@@ -199,6 +201,6 @@ const barFillStyle: React.CSSProperties = {
 const xLabelStyle: React.CSSProperties = {
     marginTop: '8px',
     fontSize: '0.75rem',
-    color: '#64748b',
+    color: 'var(--text-secondary)',
     fontWeight: 500
 };
