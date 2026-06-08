@@ -1,12 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, Search, Users, MoreVertical, CheckCircle2, X } from 'lucide-react';
+import { ChevronRight, Search, Users, MoreVertical, CheckCircle2 } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
-import UserService from '../services/userService';
 import api from '../services/api';
 import '../styles/dashboard.css';
-import '../styles/details.css';
-import { CustomSelect } from './CustomSelect';
 
 interface Member {
   id: string;
@@ -46,12 +43,6 @@ export const CondominiumMembersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
-  
-  // Actions dropdown & Custom Modals States
-  const [activeMenuMemberId, setActiveMenuMemberId] = useState<string | null>(null);
-  const [memberToRemove, setMemberToRemove] = useState<Member | null>(null);
-  const [memberToEditRole, setMemberToEditRole] = useState<Member | null>(null);
-  const [newRole, setNewRole] = useState<string>('MORADOR');
   
   const [condominiumName, setCondominiumName] = useState<string>('');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -102,21 +93,13 @@ export const CondominiumMembersPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const handleCloseMenu = () => {
-      setActiveMenuMemberId(null);
-    };
-    document.addEventListener('click', handleCloseMenu);
-    return () => document.removeEventListener('click', handleCloseMenu);
-  }, []);
-
   const handleAddMember = async (user: UserData) => {
     if (!condominiumId) return;
     setAddingId(user.id);
     setShowDropdown(false);
     try {
       await CondominiumService.addMember(condominiumId, user.id);
-      showToast(`${user.name} vinculado com sucesso.`);
+      showToast(`✓ ${user.name} vinculado com sucesso`);
       setSearchTerm('');
       await fetchData();
     } catch (error: any) {
@@ -129,24 +112,15 @@ export const CondominiumMembersPage: React.FC = () => {
 
   const handleRemoveMember = async (userId: string, userName: string) => {
     if (!condominiumId) return;
+    if (!window.confirm(`Tem certeza que deseja remover ${userName} do condomínio?`)) return;
+
     try {
       await CondominiumService.removeMember(condominiumId, userId);
-      showToast(`Morador removido com sucesso.`);
+      showToast(`✓ Morador removido`);
       await fetchData();
     } catch (error: any) {
       console.error('Erro ao remover morador:', error);
       alert('Erro ao remover morador. Verifique suas permissões.');
-    }
-  };
-
-  const handleEditRole = async (userId: string, role: 'ADMIN' | 'SINDICO' | 'MORADOR') => {
-    try {
-      await UserService.changeUserRole(userId, role);
-      showToast('Papel do morador alterado com sucesso.');
-      await fetchData();
-    } catch (error: any) {
-      console.error('Erro ao alterar papel:', error);
-      alert(error.message || 'Erro ao alterar papel. Verifique suas permissões.');
     }
   };
 
@@ -190,24 +164,6 @@ export const CondominiumMembersPage: React.FC = () => {
         <div key={toast.id} className="members-toast" style={{ top: `${24 + index * 60}px` }}>
           <CheckCircle2 size={18} color="#10B981" />
           <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-main)' }}>{toast.text}</span>
-          <button 
-            type="button"
-            onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} 
-            style={{ 
-              background: 'none', 
-              border: 'none', 
-              cursor: 'pointer', 
-              padding: '2px', 
-              marginLeft: '8px',
-              display: 'flex', 
-              alignItems: 'center', 
-              color: 'var(--text-light)',
-              transition: 'color 0.2s'
-            }}
-            title="Fechar"
-          >
-            <X size={14} />
-          </button>
         </div>
       ))}
 
@@ -262,7 +218,7 @@ export const CondominiumMembersPage: React.FC = () => {
                   <tr>
                     <th>Nome</th>
                     <th>Email</th>
-                    <th>Papel</th>
+                    <th>Role</th>
                     {isAdmin && <th style={{ textAlign: 'right' }}>Ações</th>}
                   </tr>
                 </thead>
@@ -275,26 +231,7 @@ export const CondominiumMembersPage: React.FC = () => {
 
                     return (
                     <tr key={member.id}>
-                      <td style={{ fontWeight: 500 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '50%',
-                            backgroundColor: '#eef2ff',
-                            color: '#4f46e5',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            flexShrink: 0
-                          }}>
-                            {memberName.charAt(0).toUpperCase()}
-                          </div>
-                          <span>{memberName}</span>
-                        </div>
-                      </td>
+                      <td style={{ fontWeight: 500 }}>{memberName}</td>
                       <td>{memberEmail}</td>
                       <td>
                         <span className={getRoleBadgeClass(memberRole)}>
@@ -305,42 +242,21 @@ export const CondominiumMembersPage: React.FC = () => {
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ position: 'relative', display: 'inline-block' }}>
                             <button 
-                              type="button"
                               className="members-action-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuMemberId(activeMenuMemberId === member.id ? null : member.id);
+                              onClick={() => {
+                                // Simples menu de contexto improvisado para a refatoração.
+                                // Em produção idealmente usaríamos um componente Dropdown Menu real (ex: Radix UI)
+                                const opt = window.prompt("Digite 1 para Remover ou 2 para Editar Role:");
+                                if (opt === '1') {
+                                  handleRemoveMember(realUserId, memberName);
+                                } else if (opt === '2') {
+                                  alert("Ação de Editar Role em breve!");
+                                }
                               }}
                               title="Ações"
                             >
                               <MoreVertical size={16} />
                             </button>
-                            
-                            {activeMenuMemberId === member.id && (
-                              <div className="member-actions-dropdown">
-                                <button 
-                                  type="button"
-                                  className="member-actions-option"
-                                  onClick={() => {
-                                    setMemberToEditRole(member);
-                                    setNewRole(memberRole);
-                                    setActiveMenuMemberId(null);
-                                  }}
-                                >
-                                  Editar papel
-                                </button>
-                                <button 
-                                  type="button"
-                                  className="member-actions-option destructive"
-                                  onClick={() => {
-                                    setMemberToRemove(member);
-                                    setActiveMenuMemberId(null);
-                                  }}
-                                >
-                                  Remover morador
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </td>
                       )}
