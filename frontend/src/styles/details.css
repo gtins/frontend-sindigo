@@ -27,8 +27,9 @@
     align-items: center;
     background: white;
     padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
     margin-bottom: var(--space-lg);
 }
 
@@ -49,7 +50,7 @@
     align-items: center;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     background: white;
     color: var(--text-main);
@@ -65,10 +66,11 @@
 
 .stat-card {
     flex: 1;
-    background: #f8fafc;
+    background: white;
     padding: var(--space-lg);
-    border-radius: var(--radius-lg);
-    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
 }
 
 .stat-key {
@@ -87,15 +89,16 @@
 /* Main Layout Grid */
 .details-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 2.3fr 1fr;
     gap: var(--space-lg);
 }
 
 /* Section Cards */
 .section-card {
     background: white;
-    border-radius: var(--radius-lg);
-    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
     padding: var(--space-lg);
     margin-bottom: var(--space-lg);
 }
@@ -268,4 +271,391 @@
 
 .clickable-item:hover {
     background-color: #f1f5f9 !important; /* Levemente mais escuro que o branco normal */
-}
+}
+
+/* Custom Modal Design System (Premium & Clean) */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(15, 23, 42, 0.3) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-card {
+    background-color: #ffffff !important;
+    border-radius: 24px !important;
+    width: 100%;
+    max-width: 520px;
+    padding: 32px !important;
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.04) !important;
+    max-height: 90vh;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    animation: modalSlideUp 0.25s ease-out;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+    background-color: #f1f5f9;
+    color: var(--text-main);
+}
+
+.modal-form,
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    flex: 1;
+    padding-right: 8px;
+    box-sizing: border-box;
+}
+
+.modal-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-label {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.modal-input {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background-color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.modal-textarea {
+    min-height: 90px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background-color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.modal-error {
+    padding: 12px 16px;
+    border-radius: 12px;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #fecaca;
+    margin-bottom: 16px;
+}
+
+/* Section dividers and helper visual widgets */
+.modal-section-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 8px 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-section-divider {
+    border: 0;
+    height: 1px;
+    background: #f1f5f9;
+    margin: 4px 0 8px 0;
+}
+
+/* Custom Dropzone styles for visual upload */
+.dropzone-container {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 24px 16px;
+    text-align: center;
+    background-color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.dropzone-container:hover {
+    border-color: var(--color-primary);
+    background-color: #f1f5f9;
+}
+
+.dropzone-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.dropzone-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+/* Styled Rules block */
+.rules-callout {
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 0.875rem;
+    background-color: #f8fafc;
+    color: var(--text-secondary);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.rules-title {
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.rules-list {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.rules-list li {
+    margin-bottom: 4px;
+}
+
+/* Animations */
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Custom Select styling inside Modals */
+.modal-select-trigger {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    background-color: #ffffff;
+    outline: none;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    text-align: left;
+}
+
+.modal-select-trigger:focus,
+.modal-select-trigger.active {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.modal-select-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    z-index: 1200;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 340px;
+    overflow-y: auto;
+    animation: modalFadeIn 0.15s ease-out forwards;
+    box-sizing: border-box;
+}
+
+.modal-select-option {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.modal-select-option:hover {
+    background-color: #f1f5f9;
+    color: var(--text-main);
+}
+
+.modal-select-option.selected {
+    background-color: #f5f3ff;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* Custom premium scrollbar for Modal content scrolling */
+.modal-form::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.modal-form::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-form::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+}
+
+.modal-form::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* Custom premium scrollbar for Custom Select dropdown */
+.modal-select-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 20px;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* Date/Datetime inputs premium calendar icon styling */
+.date-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.date-input-field {
+    padding-right: 40px !important;
+}
+
+.date-input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-light);
+    z-index: 1;
+}
+
+/* Hide default calendar indicator browser decorations but keep click functionality active over the custom icon */
+.modal-input[type="date"]::-webkit-calendar-picker-indicator,
+.modal-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    background: transparent !important;
+    color: transparent !important;
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    z-index: 2;
+}
+
+

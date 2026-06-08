@@ -171,13 +171,15 @@ export const GlobalCalendarPage: React.FC = () => {
 
     return (
         <div className="content-wrapper">
-            <div className="page-header-container" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 className="page-title-main">
-                        <CalendarIcon size={24} style={{ color: 'var(--color-accent)' }} />
-                        Calendário Global
-                    </h2>
-                    <p className="page-subtitle-main" style={{ margin: '4px 0 0 0', fontSize: '0.875rem' }}>
+            <div className="page-header" style={{ marginBottom: 'var(--space-24)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <CalendarIcon size={22} color="var(--color-accent)" />
+                        </div>
+                        <h2 className="page-title" style={{ margin: 0 }}>Calendário Global</h2>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                         Visualize atividades, chamados e reservas agendadas nos condomínios.
                     </p>
                 </div>

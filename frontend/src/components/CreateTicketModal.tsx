@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Image } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
 import AttachmentService from '../services/attachmentService';
 import type { CreateTicketPayload } from '../types';
+import { CustomSelect } from './CustomSelect';
+
 
 interface CreateTicketModalProps {
     condominiumId: string;
@@ -64,79 +66,124 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
         }
     };
 
+    const isFormValid = title.trim() && description.trim() && location.trim();
+
     return (
-        <div style={overlayStyle}>
-            <div style={modalStyle}>
-                <div style={headerStyle}>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Novo Chamado</h2>
-                    <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card">
+                <div className="modal-header">
+                    <h2 className="modal-title">Novo chamado</h2>
+                    <button onClick={onClose} className="modal-close-btn"><X size={20} /></button>
                 </div>
                 
-                {error && <div style={errorStyle}>{error}</div>}
+                {error && <div className="modal-error">{error}</div>}
                 
-                <form onSubmit={handleSubmit} style={formStyle}>
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Título</label>
-                        <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} placeholder="Ex: Lâmpada queimada na garagem" />
+                <form onSubmit={handleSubmit} className="modal-form">
+                    <div className="modal-input-group">
+                        <label className="modal-label">Título</label>
+                        <input 
+                            type="text" 
+                            required 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)} 
+                            className="modal-input" 
+                            placeholder="Ex: Lâmpada queimada na garagem" 
+                        />
                     </div>
                     
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Descrição</label>
-                        <textarea required value={description} onChange={(e) => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: A lâmpada da vaga 42 no subsolo 1 está piscando e apagou." />
+                    <div className="modal-input-group">
+                        <label className="modal-label">Descrição</label>
+                        <textarea 
+                            required 
+                            value={description} 
+                            onChange={(e) => setDescription(e.target.value)} 
+                            className="modal-textarea" 
+                            placeholder="Ex: A lâmpada da vaga 42 no subsolo 1 está piscando e apagou." 
+                        />
                     </div>
 
                     <div style={{ display: 'flex', gap: '16px' }}>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Categoria</label>
-                            <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
-                                <option value="SOLICITACAO">Solicitação</option>
-                                <option value="RECLAMACAO">Reclamação</option>
-                                <option value="ESTRUTURA">Estrutura</option>
-                                <option value="ELETRICA">Elétrica</option>
-                                <option value="LIMPEZA">Limpeza</option>
-                                <option value="SEGURANCA">Segurança</option>
-                                <option value="HIDRAULICA">Hidráulica</option>
-                                <option value="MANUTENCAO">Manutenção</option>
-                                <option value="OUTRO">Outros</option>
-                            </select>
+                        <div className="modal-input-group" style={{ flex: 1 }}>
+                            <label className="modal-label">Categoria</label>
+                            <CustomSelect
+                                value={category}
+                                onChange={(val) => setCategory(val)}
+                                options={[
+                                    { value: 'SOLICITACAO', label: 'Solicitação' },
+                                    { value: 'RECLAMACAO', label: 'Reclamação' },
+                                    { value: 'ESTRUTURA', label: 'Estrutura' },
+                                    { value: 'ELETRICA', label: 'Elétrica' },
+                                    { value: 'LIMPEZA', label: 'Limpeza' },
+                                    { value: 'SEGURANCA', label: 'Segurança' },
+                                    { value: 'HIDRAULICA', label: 'Hidráulica' },
+                                    { value: 'MANUTENCAO', label: 'Manutenção' },
+                                    { value: 'OUTRO', label: 'Outros' }
+                                ]}
+                            />
                         </div>
 
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Prioridade</label>
-                            <select value={priority} onChange={(e) => setPriority(e.target.value as 'ALTA' | 'BAIXA' | 'MEDIA' | 'CRITICA' | 'URGENTE')} style={inputStyle}>
-                                <option value="BAIXA">Baixa</option>
-                                <option value="MEDIA">Média</option>
-                                <option value="ALTA">Alta</option>
-                                <option value="URGENTE">Urgente</option>
-                                <option value="CRITICA">Crítica</option>
-                            </select>
+                        <div className="modal-input-group" style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <label className="modal-label" style={{ margin: 0 }}>Prioridade</label>
+                                <span style={{
+                                    display: 'inline-block',
+                                    width: '8px',
+                                    height: '8px',
+                                    borderRadius: '50%',
+                                    backgroundColor: priority === 'BAIXA' ? '#3b82f6' : priority === 'MEDIA' ? '#f59e0b' : '#ef4444'
+                                }} />
+                            </div>
+                            <CustomSelect
+                                value={priority}
+                                onChange={(val) => setPriority(val as any)}
+                                options={[
+                                    { value: 'BAIXA', label: 'Baixa' },
+                                    { value: 'MEDIA', label: 'Média' },
+                                    { value: 'ALTA', label: 'Alta' },
+                                    { value: 'URGENTE', label: 'Urgente' },
+                                    { value: 'CRITICA', label: 'Crítica' }
+                                ]}
+                            />
                         </div>
                     </div>
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Localização</label>
-                        <input type="text" required value={location} onChange={(e) => setLocation(e.target.value)} style={inputStyle} placeholder="Ex: Subsolo 1, Vaga 42" />
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Fotos de Evidência (Máx. 3 fotos)</label>
+                    <div className="modal-input-group">
+                        <label className="modal-label">Localização</label>
                         <input 
-                            type="file" 
-                            multiple 
-                            accept="image/*" 
-                            onChange={handleFileChange} 
-                            style={inputStyle} 
-                            disabled={loading}
+                            type="text" 
+                            required 
+                            value={location} 
+                            onChange={(e) => setLocation(e.target.value)} 
+                            className="modal-input" 
+                            placeholder="Ex: Subsolo 1, Vaga 42" 
                         />
+                    </div>
+
+                    <div className="modal-input-group">
+                        <label className="modal-label">Fotos de evidência (Máx. 3 fotos)</label>
+                        <label className="dropzone-container">
+                            <input 
+                                type="file" 
+                                multiple 
+                                accept="image/*" 
+                                onChange={handleFileChange} 
+                                style={{ display: 'none' }}
+                                disabled={loading}
+                            />
+                            <Image size={24} color="var(--text-light)" style={{ marginBottom: '4px' }} />
+                            <p className="dropzone-title">Arraste imagens aqui ou clique para selecionar</p>
+                            <p className="dropzone-subtitle">PNG, JPG ou JPEG • até 3 fotos</p>
+                        </label>
+                        
                         {selectedFiles.length > 0 && (
-                            <div style={previewContainerStyle}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px dashed #e2e8f0' }}>
                                 {selectedFiles.map((file, idx) => (
-                                    <div key={idx} style={previewItemStyle}>
-                                        <span style={previewNameStyle}>{file.name}</span>
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '280px', fontWeight: 500, color: 'var(--text-main)' }}>{file.name}</span>
                                         <button 
                                             type="button" 
                                             onClick={() => removeFile(idx)} 
-                                            style={removeFileBtnStyle}
+                                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
                                             disabled={loading}
                                         >
                                             Remover
@@ -147,9 +194,23 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
                         )}
                     </div>
 
-                    <div style={footerStyle}>
-                        <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading}>Cancelar</button>
-                        <button type="submit" style={submitBtnStyle} disabled={loading}>
+                    <div className="modal-footer">
+                        <button 
+                            type="button" 
+                            onClick={onClose} 
+                            className="secondary-btn" 
+                            style={{ height: '42px', borderRadius: '12px' }} 
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="primary-btn" 
+                            style={{ height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }} 
+                            disabled={loading || !isFormValid}
+                        >
+                            <Plus size={16} />
                             {loading ? 'Salvando...' : 'Abrir chamado'}
                         </button>
                     </div>
@@ -157,57 +218,4 @@ export const CreateTicketModal: React.FC<CreateTicketModalProps> = ({ condominiu
             </div>
         </div>
     );
-};
-
-// Styles
-const overlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 };
-const modalStyle: React.CSSProperties = { backgroundColor: '#fff', borderRadius: '8px', width: '100%', maxWidth: '500px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' };
-const headerStyle: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' };
-const closeBtnStyle: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '4px' };
-const formStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '16px' };
-const inputGroupStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '8px' };
-const labelStyle: React.CSSProperties = { fontSize: '0.875rem', fontWeight: 500, color: '#334155' };
-const inputStyle: React.CSSProperties = { padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.875rem' };
-const footerStyle: React.CSSProperties = { display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' };
-const cancelBtnStyle: React.CSSProperties = { padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', backgroundColor: '#fff', color: '#475569', fontWeight: 500, cursor: 'pointer' };
-const submitBtnStyle: React.CSSProperties = { padding: '8px 16px', borderRadius: '6px', border: 'none', backgroundColor: '#1e40af', color: '#fff', fontWeight: 500, cursor: 'pointer' };
-const errorStyle: React.CSSProperties = { padding: '10px', borderRadius: '6px', backgroundColor: '#fee2e2', color: '#b91c1c', fontSize: '0.875rem', marginBottom: '16px' };
-
-const previewContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    marginTop: '8px',
-    backgroundColor: '#f8fafc',
-    padding: '8px',
-    borderRadius: '6px',
-    border: '1px dashed #cbd5e1'
-};
-
-const previewItemStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '0.75rem',
-    color: '#334155',
-    backgroundColor: '#fff',
-    padding: '6px 8px',
-    borderRadius: '4px',
-    border: '1px solid #e2e8f0'
-};
-
-const previewNameStyle: React.CSSProperties = {
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    maxWidth: '280px'
-};
-
-const removeFileBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    color: '#ef4444',
-    cursor: 'pointer',
-    fontSize: '0.75rem',
-    fontWeight: 500
 };

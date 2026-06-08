@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Plus, Calendar } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
 import type { CreateActivityPayload, Ticket, Provider } from '../types';
+import { CustomSelect } from './CustomSelect';
+
 
 interface CreateActivityModalProps {
     condominiumId: string;
@@ -50,70 +52,167 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
         }
     };
 
+    const isFormValid = title.trim() && description.trim() && startDate && endDate;
+
     return (
-        <div style={overlayStyle}>
-            <div style={modalStyle}>
-                <div style={headerStyle}>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Registrar atividade</h2>
-                    <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card">
+                <div className="modal-header">
+                    <h2 className="modal-title">Registrar atividade</h2>
+                    <button onClick={onClose} className="modal-close-btn"><X size={20} /></button>
                 </div>
                 
-                {error && <div style={errorStyle}>{error}</div>}
+                {error && <div className="modal-error">{error}</div>}
                 
-                <form onSubmit={handleSubmit} style={formStyle}>
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Título</label>
-                        <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} style={inputStyle} placeholder="Ex: Limpeza da Piscina" />
+                <form onSubmit={handleSubmit} className="modal-form">
+                    
+                    {/* Bloco 1: Informações da atividade */}
+                    <div>
+                        <div className="modal-section-title">Informações da atividade</div>
+                        <hr className="modal-section-divider" />
+                        
+                        <div className="modal-form" style={{ gap: '16px', marginTop: '12px' }}>
+                            <div className="modal-input-group">
+                                <label className="modal-label">Título</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={title} 
+                                    onChange={(e) => setTitle(e.target.value)} 
+                                    className="modal-input" 
+                                    placeholder="Ex: Limpeza da piscina" 
+                                />
+                            </div>
+                            
+                            <div className="modal-input-group">
+                                <label className="modal-label">Descrição</label>
+                                <textarea 
+                                    required 
+                                    value={description} 
+                                    onChange={(e) => setDescription(e.target.value)} 
+                                    className="modal-textarea" 
+                                    placeholder="Ex: Limpeza com filtragem e aplicação de produtos químicos" 
+                                />
+                            </div>
+
+                            <div className="modal-input-group">
+                                <label className="modal-label">Tipo de atividade</label>
+                                <CustomSelect
+                                    value={type}
+                                    onChange={(val) => setType(val)}
+                                    options={[
+                                        { value: 'ONCE', label: 'Única (atividade pontual única)' },
+                                        { value: 'PERIODIC', label: 'Periódica (rotina ou manutenção recorrente)' }
+                                    ]}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bloco 2: Período */}
+                    <div style={{ marginTop: '8px' }}>
+                        <div className="modal-section-title">Período</div>
+                        <hr className="modal-section-divider" />
+                        
+                        <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                            <div className="modal-input-group" style={{ flex: 1 }}>
+                                <label className="modal-label">Data de início</label>
+                                <div className="date-input-wrapper">
+                                    <input 
+                                        type="date" 
+                                        required 
+                                        value={startDate} 
+                                        onChange={(e) => setStartDate(e.target.value)} 
+                                        className="modal-input date-input-field" 
+                                    />
+                                    <Calendar size={16} className="date-input-icon" />
+                                </div>
+                            </div>
+                            <div className="modal-input-group" style={{ flex: 1 }}>
+                                <label className="modal-label">Data final</label>
+                                <div className="date-input-wrapper">
+                                    <input 
+                                        type="date" 
+                                        required 
+                                        value={endDate} 
+                                        onChange={(e) => setEndDate(e.target.value)} 
+                                        className="modal-input date-input-field" 
+                                    />
+                                    <Calendar size={16} className="date-input-icon" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bloco 3: Vínculos opcionais */}
+                    <div style={{ marginTop: '8px' }}>
+                        <div className="modal-section-title">Vínculos opcionais</div>
+                        <hr className="modal-section-divider" />
+                        
+                        <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
+                            <div className="modal-input-group" style={{ flex: 1 }}>
+                                <label className="modal-label">Vincular chamado</label>
+                                <CustomSelect
+                                    value={ticketId}
+                                    onChange={(val) => setTicketId(val)}
+                                    placeholder="Não vincular"
+                                    options={[
+                                        { value: '', label: 'Não vincular' },
+                                        ...tickets.map(t => {
+                                            const statusMap: Record<string, string> = {
+                                                ABERTO: 'Aberto',
+                                                EM_ANDAMENTO: 'Em andamento',
+                                                RESOLVIDO: 'Resolvido',
+                                                FECHADO: 'Fechado'
+                                            };
+                                            const statusLabel = statusMap[t.status] || t.status;
+                                            return { value: t.id, label: `${t.title} (${statusLabel})` };
+                                        })
+                                    ]}
+                                />
+                            </div>
+                            <div className="modal-input-group" style={{ flex: 1 }}>
+                                <label className="modal-label">Vincular prestador</label>
+                                <CustomSelect
+                                    value={providerId}
+                                    onChange={(val) => setProviderId(val)}
+                                    placeholder="Não vincular"
+                                    options={[
+                                        { value: '', label: 'Não vincular' },
+                                        ...providers.map(p => {
+                                            const typeMap: Record<string, string> = {
+                                                PLUMBER: 'Encanador',
+                                                ELECTRICIAN: 'Eletricista',
+                                                GARDENER: 'Jardineiro',
+                                                CARPENTER: 'Marceneiro',
+                                                OTHER: 'Outros'
+                                            };
+                                            const typeLabel = typeMap[p.serviceType] || p.serviceType;
+                                            return { value: p.id, label: `${p.name} (${typeLabel})` };
+                                        })
+                                    ]}
+                                />
+                            </div>
+                        </div>
                     </div>
                     
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Descrição</label>
-                        <textarea required value={description} onChange={(e) => setDescription(e.target.value)} style={inputStyle} placeholder="Ex: Limpeza com filtragem" />
-                    </div>
-
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Tipo</label>
-                        <select value={type} onChange={(e) => setType(e.target.value)} style={inputStyle}>
-                            <option value="ONCE">Única</option>
-                            <option value="PERIODIC">Periódica</option>
-                        </select>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data de Início</label>
-                            <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} />
-                        </div>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data Final</label>
-                            <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} style={inputStyle} />
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Vincular Chamado (Opcional)</label>
-                            <select value={ticketId} onChange={(e) => setTicketId(e.target.value)} style={inputStyle}>
-                                <option value="">Não vincular</option>
-                                {tickets.map(t => (
-                                    <option key={t.id} value={t.id}>{t.title} ({t.status})</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Vincular Prestador (Opcional)</label>
-                            <select value={providerId} onChange={(e) => setProviderId(e.target.value)} style={inputStyle}>
-                                <option value="">Não vincular</option>
-                                {providers.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} ({p.serviceType})</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div style={footerStyle}>
-                        <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading}>Cancelar</button>
-                        <button type="submit" style={submitBtnStyle} disabled={loading}>
+                    <div className="modal-footer">
+                        <button 
+                            type="button" 
+                            onClick={onClose} 
+                            className="secondary-btn" 
+                            style={{ height: '42px', borderRadius: '12px' }} 
+                            disabled={loading}
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="primary-btn" 
+                            style={{ height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }} 
+                            disabled={loading || !isFormValid}
+                        >
+                            <Plus size={16} />
                             {loading ? 'Salvando...' : 'Registrar atividade'}
                         </button>
                     </div>
@@ -121,100 +220,4 @@ export const CreateActivityModal: React.FC<CreateActivityModalProps> = ({ condom
             </div>
         </div>
     );
-};
-
-// Styles
-const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-};
-
-const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    width: '100%',
-    maxWidth: '500px',
-    padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-};
-
-const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-};
-
-const closeBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#64748b',
-    padding: '4px'
-};
-
-const formStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px'
-};
-
-const inputGroupStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-};
-
-const labelStyle: React.CSSProperties = {
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#334155'
-};
-
-const inputStyle: React.CSSProperties = {
-    padding: '10px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.875rem'
-};
-
-const footerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '12px',
-    marginTop: '16px'
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#fff',
-    color: '#475569',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const submitBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: '#1e40af',
-    color: '#fff',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const errorStyle: React.CSSProperties = {
-    padding: '10px',
-    borderRadius: '6px',
-    backgroundColor: '#fee2e2',
-    color: '#b91c1c',
-    fontSize: '0.875rem',
-    marginBottom: '16px'
 };

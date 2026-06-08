@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Info, Check, Calendar } from 'lucide-react';
 import CondominiumService from '../services/condominiumService';
 import type { CreateReservationPayload } from '../types';
+import { CustomSelect } from './CustomSelect';
+
 
 interface CreateReservationModalProps {
     condominiumId: string;
@@ -126,63 +128,83 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
         }
     };
 
+    const isFormValid = area && startTime && endTime && unitNumber.trim();
+
     return (
-        <div style={overlayStyle}>
-            <div style={modalStyle}>
-                <div style={headerStyle}>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>Nova Reserva</h2>
-                    <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card">
+                <div className="modal-header">
+                    <h2 className="modal-title">Nova reserva</h2>
+                    <button onClick={onClose} className="modal-close-btn"><X size={20} /></button>
                 </div>
                 
-                <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    backgroundColor: '#eff6ff',
-                    color: '#1e40af',
-                    border: '1px solid #bfdbfe',
-                    marginBottom: '16px',
-                    lineHeight: '1.4'
-                }}>
-                    <strong>Regras de Reserva:</strong>
-                    <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                <div className="rules-callout">
+                    <div className="rules-title">
+                        <Info size={16} color="var(--color-primary)" />
+                        <strong>Regras de reserva:</strong>
+                    </div>
+                    <ul className="rules-list">
                         <li>Mínimo de <strong>7 dias</strong> de antecedência.</li>
                         <li>Duração máxima de até <strong>6 horas</strong>.</li>
                     </ul>
                 </div>
                 
-                {error && <div style={errorStyle}>{error}</div>}
+                {error && <div className="modal-error">{error}</div>}
                 
-                <form onSubmit={handleSubmit} style={formStyle}>
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Área</label>
-                        <select required value={area} onChange={(e) => setArea(e.target.value)} style={inputStyle}>
-                            <option value="">Selecione uma área...</option>
-                            <option value="Salão de Festas">Salão de Festas</option>
-                            <option value="Churrasqueira">Churrasqueira</option>
-                            <option value="Quadra Poliesportiva">Quadra Poliesportiva</option>
-                            <option value="Piscina">Piscina</option>
-                            <option value="Academia">Academia</option>
-                            <option value="Espaço Gourmet">Espaço Gourmet</option>
-                        </select>
+                <form onSubmit={handleSubmit} className="modal-form">
+                    <div className="modal-input-group">
+                        <label className="modal-label">Área</label>
+                        <CustomSelect
+                            value={area}
+                            onChange={(val) => setArea(val)}
+                            placeholder="Selecione uma área..."
+                            options={[
+                                { value: 'Salão de Festas', label: 'Salão de Festas' },
+                                { value: 'Churrasqueira', label: 'Churrasqueira' },
+                                { value: 'Quadra Poliesportiva', label: 'Quadra Poliesportiva' },
+                                { value: 'Piscina', label: 'Piscina' },
+                                { value: 'Academia', label: 'Academia' },
+                                { value: 'Espaço Gourmet', label: 'Espaço Gourmet' }
+                            ]}
+                        />
                     </div>
 
                     <div style={{ display: 'flex', gap: '16px' }}>
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data e Hora Início</label>
-                            <input type="datetime-local" required value={startTime} step="1" onChange={(e) => setStartTime(e.target.value)} style={inputStyle} />
+                        <div className="modal-input-group" style={{ flex: 1 }}>
+                            <label className="modal-label">Início da reserva</label>
+                            <div className="date-input-wrapper">
+                                <input 
+                                    type="datetime-local" 
+                                    required 
+                                    value={startTime} 
+                                    step="1" 
+                                    onChange={(e) => setStartTime(e.target.value)} 
+                                    className="modal-input date-input-field" 
+                                />
+                                <Calendar size={16} className="date-input-icon" />
+                            </div>
                         </div>
                         
-                        <div style={{ ...inputGroupStyle, flex: 1 }}>
-                            <label style={labelStyle}>Data e Hora Fim</label>
-                            <input type="datetime-local" required value={endTime} step="1" onChange={(e) => setEndTime(e.target.value)} style={inputStyle} />
+                        <div className="modal-input-group" style={{ flex: 1 }}>
+                            <label className="modal-label">Fim da reserva</label>
+                            <div className="date-input-wrapper">
+                                <input 
+                                    type="datetime-local" 
+                                    required 
+                                    value={endTime} 
+                                    step="1" 
+                                    onChange={(e) => setEndTime(e.target.value)} 
+                                    className="modal-input date-input-field" 
+                                />
+                                <Calendar size={16} className="date-input-icon" />
+                            </div>
                         </div>
                     </div>
 
                     {availabilityMessage && (
                         <div style={{
-                            padding: '10px 12px',
-                            borderRadius: '6px',
+                            padding: '10px 14px',
+                            borderRadius: '12px',
                             fontSize: '0.875rem',
                             fontWeight: 500,
                             backgroundColor: availabilityStatus === 'available' ? '#f0fdf4' : availabilityStatus === 'conflicts' ? '#fffbeb' : '#f8fafc',
@@ -195,122 +217,40 @@ export const CreateReservationModal: React.FC<CreateReservationModalProps> = ({ 
                         </div>
                     )}
 
-                    <div style={inputGroupStyle}>
-                        <label style={labelStyle}>Número da Unidade (Ex: 201, 202)</label>
+                    <div className="modal-input-group">
+                        <label className="modal-label">Unidade solicitante</label>
                         <input 
                             type="text" 
                             required 
                             placeholder="Informe o número da sua unidade" 
                             value={unitNumber} 
                             onChange={(e) => setUnitNumber(e.target.value)} 
-                            style={inputStyle} 
+                            className="modal-input" 
                         />
                     </div>
                     
-                    <div style={footerStyle}>
-                        <button type="button" onClick={onClose} style={cancelBtnStyle} disabled={loading || checkingAvailability}>Cancelar</button>
-                        <button type="submit" style={submitBtnStyle} disabled={loading || checkingAvailability}>
-                            {loading ? 'Salvando...' : 'Confirmar Reserva'}
+                    <div className="modal-footer">
+                        <button 
+                            type="button" 
+                            onClick={onClose} 
+                            className="secondary-btn" 
+                            style={{ height: '42px', borderRadius: '12px' }} 
+                            disabled={loading || checkingAvailability}
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            type="submit" 
+                            className="primary-btn" 
+                            style={{ height: '42px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '6px' }} 
+                            disabled={loading || checkingAvailability || !isFormValid || availabilityStatus === 'conflicts'}
+                        >
+                            <Check size={16} />
+                            {loading ? 'Salvando...' : 'Confirmar reserva'}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     );
-};
-
-// Styles
-const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-};
-
-const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    width: '100%',
-    maxWidth: '500px',
-    padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-};
-
-const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px'
-};
-
-const closeBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#64748b',
-    padding: '4px'
-};
-
-const formStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px'
-};
-
-const inputGroupStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-};
-
-const labelStyle: React.CSSProperties = {
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#334155'
-};
-
-const inputStyle: React.CSSProperties = {
-    padding: '10px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.875rem'
-};
-
-const footerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '12px',
-    marginTop: '16px'
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#fff',
-    color: '#475569',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const submitBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: '#1e40af',
-    color: '#fff',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const errorStyle: React.CSSProperties = {
-    padding: '10px',
-    borderRadius: '6px',
-    backgroundColor: '#fee2e2',
-    color: '#b91c1c',
-    fontSize: '0.875rem',
-    marginBottom: '16px'
 };

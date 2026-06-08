@@ -88,6 +88,129 @@ export const BuildingDetails: React.FC = () => {
         ? new Date(nextPeriodicActivity.startDate).toLocaleDateString('pt-BR') 
         : 'N/A';
 
+    const formatReservationTime = (startStr?: string, endStr?: string) => {
+        if (!startStr) return '';
+        try {
+            const start = new Date(startStr);
+            const end = endStr ? new Date(endStr) : null;
+            
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const day = pad(start.getDate());
+            const month = pad(start.getMonth() + 1);
+            const year = start.getFullYear();
+            const startHour = pad(start.getHours());
+            const startMin = pad(start.getMinutes());
+            
+            if (end) {
+                const endHour = pad(end.getHours());
+                const endMin = pad(end.getMinutes());
+                return `${day}/${month}/${year} • ${startHour}:${startMin} às ${endHour}:${endMin}`;
+            }
+            return `${day}/${month}/${year} • ${startHour}:${startMin}`;
+        } catch (e) {
+            return startStr;
+        }
+    };
+
+    const getReservationStatusInfo = (status?: string) => {
+        switch (status) {
+            case 'CONFIRMED':
+                return { label: 'Confirmada', color: '#10b981', bg: '#dcfce7' };
+            case 'PENDING':
+                return { label: 'Pendente', color: '#f59e0b', bg: '#fef3c7' };
+            case 'CANCELLED':
+                return { label: 'Cancelada', color: '#ef4444', bg: '#fee2e2' };
+            default:
+                return { label: status || 'Desconhecido', color: '#64748b', bg: '#f1f5f9' };
+        }
+    };
+
+    const getTicketStatusLabel = (status?: string) => {
+        switch (status?.toUpperCase()) {
+            case 'OPEN':
+            case 'ABERTO':
+                return 'Aberto';
+            case 'IN_PROGRESS':
+            case 'EM_ANDAMENTO':
+                return 'Em Andamento';
+            case 'RESOLVED':
+            case 'RESOLVIDO':
+                return 'Resolvido';
+            case 'CLOSED':
+            case 'FECHADO':
+                return 'Fechado';
+            default:
+                return status || 'Aberto';
+        }
+    };
+
+    const getTicketPriorityInfo = (priority?: string) => {
+        switch (priority?.toUpperCase()) {
+            case 'URGENTE':
+            case 'CRITICA':
+            case 'CRITICAL':
+                return { label: 'Crítica', color: '#b91c1c', bg: '#fee2e2' };
+            case 'ALTA':
+            case 'HIGH':
+                return { label: 'Alta', color: '#c2410c', bg: '#ffedd5' };
+            case 'MEDIA':
+            case 'MEDIUM':
+                return { label: 'Média', color: '#b45309', bg: '#fef3c7' };
+            case 'BAIXA':
+            case 'LOW':
+                return { label: 'Baixa', color: '#1d4ed8', bg: '#dbeafe' };
+            default:
+                return { label: priority || 'Normal', color: '#475569', bg: '#f1f5f9' };
+        }
+    };
+
+    const formatPhone = (phone?: string) => {
+        if (!phone) return 'N/A';
+        const digits = phone.replace(/\D/g, '');
+        if (digits.length === 11) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+        } else if (digits.length === 10) {
+            return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+        }
+        return phone;
+    };
+
+    const getProviderServiceBadge = (type?: string) => {
+        let label = 'Outros';
+        switch (type) {
+            case 'ELECTRICIAN':
+                label = 'Eletricista';
+                break;
+            case 'PLUMBER':
+                label = 'Encanador';
+                break;
+            case 'GARDENER':
+                label = 'Jardineiro';
+                break;
+            case 'CARPENTER':
+                label = 'Carpinteiro';
+                break;
+            default:
+                label = type || 'Outros';
+                break;
+        }
+        return (
+            <span style={{
+                alignSelf: 'flex-start',
+                fontSize: '0.7rem',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                backgroundColor: '#e0f2fe',
+                color: '#0369a1',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.025em'
+            }}>
+                {label}
+            </span>
+        );
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
@@ -175,39 +298,39 @@ export const BuildingDetails: React.FC = () => {
     return (
         <div className="dashboard-container">
             <div className="content-wrapper">
-                <div className="details-header">
-                    <div className="breadcrumbs">
-                        <span className="breadcrumb-item" onClick={() => navigate('/')}>Visão geral</span>
-                        <ChevronRight size={14} />
-                        <span style={{ color: 'var(--text-main)' }}>{condominium.name}</span>
+                <div className="details-header" style={{ marginBottom: '16px' }}>
+                    <div className="breadcrumbs" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.825rem', color: 'var(--text-light)', marginBottom: '16px', fontWeight: 500 }}>
+                        <span className="breadcrumb-item" onClick={() => navigate('/')} style={{ color: 'var(--text-light)' }}>Visão geral</span>
+                        <ChevronRight size={12} color="var(--text-light)" />
+                        <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{condominium.name}</span>
                     </div>
                 </div>
 
                 <div className="details-title-row">
-                    <div className="building-title-section">
-                        <BuildingIcon size={24} />
-                        <h1 className="building-title">{condominium.name}</h1>
-                        <StatusBadge status={placeholderStatus} count={openTicketsCount as any} text={placeholderStatus === 'healthy' ? 'Saudável' : placeholderStatus === 'attention' ? 'Atenção' : 'Crítico'} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <BuildingIcon size={22} color="var(--color-accent)" />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <h1 className="building-title" style={{ margin: 0 }}>{condominium.name}</h1>
+                            <StatusBadge status={placeholderStatus} count={openTicketsCount as any} text={placeholderStatus === 'healthy' ? 'Saudável' : placeholderStatus === 'attention' ? 'Atenção' : 'Crítico'} />
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {isAdminOrSindico && (
                             <>
-                                <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/members`)} style={{ backgroundColor: 'var(--color-primary)' }}>
+                                <button className="secondary-btn" onClick={() => navigate(`/buildings/${condominiumId}/members`)} style={{ height: '42px', borderRadius: '12px' }}>
                                     <Users size={16} />
                                     Moradores
                                 </button>
-                                <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances`)} style={{ backgroundColor: '#10b981' }}>
+                                <button className="primary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances`)} style={{ height: '42px', borderRadius: '12px', backgroundColor: '#10b981' }}>
                                     <DollarSign size={16} />
                                     Finanças
-                                </button>
-                                <button className="secondary-btn" onClick={() => navigate(`/buildings/${condominiumId}/finances-mock`)} style={{ border: '1px solid #1e3a8a', color: '#1e3a8a', backgroundColor: 'transparent' }}>
-                                    <DollarSign size={16} />
-                                    Finanças (Mock)
                                 </button>
                             </>
                         )}
                         {isAdminOrSindico && (
-                            <button className="primary-btn">
+                            <button className="primary-btn" style={{ height: '42px', borderRadius: '12px' }}>
                                 <Edit2 size={16} />
                                 Editar prédio
                             </button>
@@ -215,18 +338,37 @@ export const BuildingDetails: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="stats-row">
-                    <div className="stat-card">
-                        <span className="stat-key">Endereço</span>
-                        <span className="stat-val" style={{ fontSize: '1rem', marginTop: '4px' }}>{condominium.address}</span>
+                <div className="stats-row" style={{ display: 'flex', gap: '16px', marginBottom: 'var(--space-24)' }}>
+                    <div className="stat-card" style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '20px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <MapPin size={22} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <span className="stat-key" style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Endereço cadastrado</span>
+                            <span className="stat-val" style={{ fontSize: '0.925rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: '1.3', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }} title={condominium.address}>
+                                {condominium.address}
+                            </span>
+                        </div>
                     </div>
-                    <div className="stat-card">
-                        <span className="stat-key">Unidades</span>
-                        <span className="stat-val">{placeholderUnits}</span>
+
+                    <div className="stat-card" style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '20px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <BuildingIcon size={22} />
+                        </div>
+                        <div>
+                            <span className="stat-key" style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Unidades ativas</span>
+                            <span className="stat-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', display: 'block', lineHeight: '1' }}>{placeholderUnits}</span>
+                        </div>
                     </div>
-                    <div className="stat-card">
-                        <span className="stat-key">Chamados abertos</span>
-                        <span className="stat-val">{openTicketsCount}</span>
+
+                    <div className="stat-card" style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '20px' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <AlertCircle size={22} />
+                        </div>
+                        <div>
+                            <span className="stat-key" style={{ fontSize: '0.72rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-light)', display: 'block', marginBottom: '4px' }}>Chamados em aberto</span>
+                            <span className="stat-val" style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', display: 'block', lineHeight: '1' }}>{openTicketsCount}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -238,19 +380,19 @@ export const BuildingDetails: React.FC = () => {
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Atividades recentes</h3>
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <select 
                                         value={activityFilter} 
                                         onChange={(e) => setActivityFilter(e.target.value as any)}
                                         className="action-btn"
-                                        style={{ outline: 'none', paddingRight: '32px' }}
+                                        style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'white', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
                                     >
                                         <option value="all">Todas</option>
                                         <option value="open">Abertas</option>
                                         <option value="closed">Fechadas</option>
                                     </select>
                                     {isAdminOrSindico && (
-                                        <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)}>
+                                        <button className="action-btn" onClick={() => setIsCreateActivityOpen(true)} style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <Plus size={16} />
                                             Registrar atividade
                                         </button>
@@ -259,16 +401,22 @@ export const BuildingDetails: React.FC = () => {
                             </div>
 
                             <div className="activity-list">
-                                {(!Array.isArray(filteredActivities) || filteredActivities.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma atividade registrada.</p> : null}
+                                {(!Array.isArray(filteredActivities) || filteredActivities.length === 0) ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
+                                        <Calendar size={32} style={{ marginBottom: '12px', color: '#94a3b8' }} />
+                                        <p style={{ fontSize: '0.875rem', margin: 0, maxWidth: '320px', lineHeight: '1.5' }}>
+                                            Nenhuma atividade registrada ainda. Registre uma atividade para acompanhar manutenções e rotinas deste prédio.
+                                        </p>
+                                    </div>
+                                ) : null}
                                 {Array.isArray(filteredActivities) && filteredActivities.map(activity => (
-                                    <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')}>
-                                        <div className="activity-icon hover-icon-white">
-                                            {activity.type === 'ONCE' && <Calendar size={20} color="#64748b" />}
-                                            {activity.type === 'PERIODIC' && <Calendar size={20} color="#22c55e" />}
+                                    <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                        <div className="activity-icon hover-icon-white" style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)', flexShrink: 0, marginRight: '16px' }}>
+                                            {activity.type === 'ONCE' ? <Calendar size={20} color="var(--color-accent)" /> : <Calendar size={20} color="#22c55e" />}
                                         </div>
-                                        <div className="activity-content">
+                                        <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span className="hover-text-white">{activity.title}</span>
+                                                <span className="hover-text-white" style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)' }}>{activity.title}</span>
                                                 <span style={{
                                                     fontSize: '0.65rem', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600,
                                                     backgroundColor: activity.type === 'ONCE' ? '#f1f5f9' : '#dcfce7',
@@ -277,9 +425,9 @@ export const BuildingDetails: React.FC = () => {
                                                     {activity.type === 'ONCE' ? 'Única' : 'Periódica'}
                                                 </span>
                                             </div>
-                                            <div className="hover-text-white" style={{ fontSize: '0.75rem', color: '#64748b' }}>{activity.description}</div>
+                                            <div className="hover-text-white" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{activity.description}</div>
                                         </div>
-                                        <div className="activity-time hover-text-white">
+                                        <div className="activity-time hover-text-white" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: 'auto' }}>
                                             {activity.startDate} a {activity.endDate}
                                         </div>
                                     </div>
@@ -292,7 +440,7 @@ export const BuildingDetails: React.FC = () => {
                             <div className="section-header">
                                 <h3 className="section-title">Reservas</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button className="action-btn" onClick={() => setIsCreateReservationOpen(true)}>
+                                    <button className="secondary-btn" onClick={() => setIsCreateReservationOpen(true)} style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Plus size={16} />
                                         Nova reserva
                                     </button>
@@ -300,48 +448,67 @@ export const BuildingDetails: React.FC = () => {
                             </div>
 
                             <div className="activity-list">
-                                {(!Array.isArray(reservations) || reservations.length === 0) ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhuma reserva encontrada.</p> : null}
-                                {Array.isArray(reservations) && reservations.map(res => (
-                                    <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')}>
-                                        <div className="activity-icon hover-icon-white">
-                                            <BookOpen size={20} />
-                                        </div>
-                                        <div className="activity-content hover-text-white">
-                                            <div>{res.area || `Reserva #${res.id}`}</div>
-                                            {res.requestedByName && (
-                                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                                                    Solicitado por: <strong>{res.requestedByName}</strong> {res.requestedByUnit ? `(Unidade ${res.requestedByUnit})` : ''}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="activity-time" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span className="hover-text-white">
-                                                {res.startTime ? new Date(res.startTime).toLocaleString('pt-BR') : ''} - {res.endTime ? new Date(res.endTime).toLocaleString('pt-BR') : ''}
-                                                {res.status && ` (${res.status})`}
-                                            </span>
-                                            {res.status === 'PENDING' && isAdminOrSindico && (
-                                                <div style={{ display: 'flex', gap: '4px' }}>
-                                                    <button 
-                                                        className="action-btn" 
-                                                        style={{ color: '#22c55e', padding: '4px', border: '1px solid #22c55e', minWidth: 'auto' }}
-                                                        onClick={(e) => { e.stopPropagation(); handleApproveReservation(res.id, 'CONFIRMED'); }}
-                                                        title="Aprovar Reserva"
-                                                    >
-                                                        <Check size={16} />
-                                                    </button>
-                                                    <button 
-                                                        className="action-btn" 
-                                                        style={{ color: '#ef4444', padding: '4px', border: '1px solid #ef4444', minWidth: 'auto' }}
-                                                        onClick={(e) => { e.stopPropagation(); handleApproveReservation(res.id, 'CANCELLED'); }}
-                                                        title="Rejeitar Reserva"
-                                                    >
-                                                        <X size={16} />
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
+                                {(!Array.isArray(reservations) || reservations.length === 0) ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
+                                        <BookOpen size={32} style={{ marginBottom: '12px', color: '#94a3b8' }} />
+                                        <p style={{ fontSize: '0.875rem', margin: 0, maxWidth: '320px', lineHeight: '1.5' }}>
+                                            Nenhuma reserva registrada ainda. Reserve áreas comuns como salão de festas ou churrasqueira.
+                                        </p>
                                     </div>
-                                ))}
+                                ) : null}
+                                {Array.isArray(reservations) && reservations.map(res => {
+                                    const statusInfo = getReservationStatusInfo(res.status);
+                                    return (
+                                        <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                            <div className="activity-icon hover-icon-white" style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)', flexShrink: 0, marginRight: '16px' }}>
+                                                <BookOpen size={20} color="var(--color-accent)" />
+                                            </div>
+                                            <div className="activity-content" style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                                <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--text-main)' }}>{res.area || `Reserva #${res.id}`}</span>
+                                                {res.requestedByName && (
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                        Solicitado por: <strong style={{ color: 'var(--text-main)', fontWeight: 600 }}>{res.requestedByName}</strong> {res.requestedByUnit ? `(Unidade ${res.requestedByUnit})` : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="activity-time" style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
+                                                <span className="hover-text-white" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                    {formatReservationTime(res.startTime, res.endTime)}
+                                                </span>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '12px',
+                                                    fontWeight: 600,
+                                                    backgroundColor: statusInfo.bg,
+                                                    color: statusInfo.color
+                                                }}>
+                                                    {statusInfo.label}
+                                                </span>
+                                                {res.status === 'PENDING' && isAdminOrSindico && (
+                                                    <div style={{ display: 'flex', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                                        <button 
+                                                            className="action-btn" 
+                                                            style={{ color: '#10b981', padding: '6px', border: '1px solid #dcfce7', backgroundColor: '#dcfce7', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                                            onClick={() => handleApproveReservation(res.id, 'CONFIRMED')}
+                                                            title="Aprovar Reserva"
+                                                        >
+                                                            <Check size={14} />
+                                                        </button>
+                                                        <button 
+                                                            className="action-btn" 
+                                                            style={{ color: '#ef4444', padding: '6px', border: '1px solid #fee2e2', backgroundColor: '#fee2e2', borderRadius: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                                                            onClick={() => handleApproveReservation(res.id, 'CANCELLED')}
+                                                            title="Rejeitar Reserva"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -350,11 +517,11 @@ export const BuildingDetails: React.FC = () => {
                             <div className="section-header">
                                 <h3 className="section-title">Chamados abertos</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button className="action-btn">
+                                    <button className="secondary-btn" style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Filter size={16} />
                                         Filtrar
                                     </button>
-                                    <button className="action-btn" onClick={() => setIsCreateTicketOpen(true)}>
+                                    <button className="primary-btn" onClick={() => setIsCreateTicketOpen(true)} style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Plus size={16} />
                                         Novo chamado
                                     </button>
@@ -362,22 +529,40 @@ export const BuildingDetails: React.FC = () => {
                             </div>
 
                             <div className="ticket-list">
-                                {tickets.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum chamado aberto.</p> : null}
-                                {tickets.map(ticket => (
-                                    <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')}>
-                                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                                            <span style={{
-                                                backgroundColor: ticket.priority === 'URGENTE' || ticket.priority === 'CRITICA' ? '#fee2e2' : ticket.priority === 'ALTA' ? '#ffedd5' : ticket.priority === 'MEDIA' ? '#fef3c7' : '#dbeafe',
-                                                color: ticket.priority === 'URGENTE' || ticket.priority === 'CRITICA' ? '#b91c1c' : ticket.priority === 'ALTA' ? '#c2410c' : ticket.priority === 'MEDIA' ? '#b45309' : '#1d4ed8',
-                                                padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600
-                                            }}>
-                                                {ticket.priority}
-                                            </span>
-                                            <span className="hover-text-white" style={{ fontWeight: 500 }}>{ticket.title}</span>
-                                        </div>
-                                        <span className="hover-text-white" style={{ color: '#94a3b8', fontSize: '0.875rem' }}>{ticket.status} • {ticket.category}</span>
+                                {tickets.length === 0 ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
+                                        <AlertCircle size={32} style={{ marginBottom: '12px', color: '#94a3b8' }} />
+                                        <p style={{ fontSize: '0.875rem', margin: 0, maxWidth: '320px', lineHeight: '1.5' }}>
+                                            Nenhum chamado aberto no momento. Quando houver solicitações pendentes, elas aparecerão aqui.
+                                        </p>
                                     </div>
-                                ))}
+                                ) : null}
+                                {tickets.map(ticket => {
+                                    const priorityInfo = getTicketPriorityInfo(ticket.priority);
+                                    return (
+                                        <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
+                                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                                <span style={{
+                                                    backgroundColor: priorityInfo.bg,
+                                                    color: priorityInfo.color,
+                                                    padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600
+                                                }}>
+                                                    {priorityInfo.label}
+                                                </span>
+                                                <span className="hover-text-white" style={{ fontWeight: 600, fontSize: '0.925rem', color: 'var(--text-main)' }}>{ticket.title}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+                                                    {getTicketStatusLabel(ticket.status)}
+                                                </span>
+                                                <span style={{ color: 'var(--text-light)', fontSize: '0.825rem' }}>•</span>
+                                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.825rem', fontWeight: 500 }}>
+                                                    {ticket.category}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -394,8 +579,8 @@ export const BuildingDetails: React.FC = () => {
                                     <button className="action-btn" onClick={() => {
                                         setCustomMapQuery(mapAddress);
                                         setIsEditingMap(true);
-                                    }} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
-                                        <Edit2 size={14} style={{ marginRight: '4px' }} /> Editar
+                                    }} style={{ height: '32px', borderRadius: '8px', padding: '0 12px', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Edit2 size={14} /> Editar
                                     </button>
                                 )}
                             </div>
@@ -407,18 +592,18 @@ export const BuildingDetails: React.FC = () => {
                                         value={customMapQuery} 
                                         onChange={(e) => setCustomMapQuery(e.target.value)}
                                         placeholder="Digite o endereço completo"
-                                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', fontSize: '0.875rem' }}
                                     />
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="primary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => {
+                                        <button className="primary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '6px', height: '32px' }} onClick={() => {
                                             localStorage.setItem(`map_query_${condominiumId}`, customMapQuery);
                                             setIsEditingMap(false);
                                         }}>Salvar</button>
-                                        <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem' }} onClick={() => setIsEditingMap(false)}>Cancelar</button>
+                                        <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '6px', height: '32px' }} onClick={() => setIsEditingMap(false)}>Cancelar</button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="map-container" style={{ width: '100%', height: '220px', backgroundColor: '#f1f5f9', borderRadius: '8px', overflow: 'hidden', marginBottom: '16px' }}>
+                                <div className="map-container" style={{ width: '100%', height: '260px', backgroundColor: '#f1f5f9', borderRadius: '12px', overflow: 'hidden', marginBottom: '16px', border: '1px solid var(--border-color)' }}>
                                     {mapAddress ? (
                                         <iframe 
                                             width="100%" 
@@ -438,27 +623,34 @@ export const BuildingDetails: React.FC = () => {
                                 </div>
                             )}
 
-                            <div className="compliance-row">
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <ShieldCheck size={18} />
-                                    <span>Conformidade</span>
+                            <div className="compliance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                                    <ShieldCheck size={18} color="#22c55e" />
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Conformidade</span>
                                 </div>
-                                <span className="compliance-tag">Em dia</span>
+                                <span className="compliance-tag" style={{ backgroundColor: '#22c55e', color: 'white', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>Em dia</span>
                             </div>
-                            <div className="compliance-row">
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <AlertCircle size={18} />
-                                    <span>Chamados abertos</span>
+                            <div className="compliance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                                    <AlertCircle size={18} color="#f59e0b" />
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Chamados abertos</span>
                                 </div>
-                                <span className="badge-count">{openTicketsCount}</span>
+                                <span className="badge-count" style={{ backgroundColor: '#f59e0b', color: 'white', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 600 }}>{openTicketsCount}</span>
                             </div>
-                            <div className="compliance-row" style={{ borderBottom: 'none' }}>
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                    <Calendar size={18} />
-                                    <span>Próxima inspeção</span>
+                            <div className="compliance-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: 'none' }}>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', color: 'var(--text-secondary)' }}>
+                                    <Calendar size={18} color="#3b82f6" />
+                                    <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>Próxima inspeção</span>
                                 </div>
-                                <span className="compliance-tag" style={{ background: nextPeriodicActivity ? '#fbbf24' : '#e2e8f0', color: nextPeriodicActivity ? '#78350f' : '#64748b' }}>
-                                    {nextInspectionDisplay}
+                                <span className="compliance-tag" style={{ 
+                                    backgroundColor: nextPeriodicActivity ? '#fef3c7' : '#f1f5f9', 
+                                    color: nextPeriodicActivity ? '#b45309' : '#64748b', 
+                                    padding: '4px 10px', 
+                                    borderRadius: '12px', 
+                                    fontSize: '0.75rem', 
+                                    fontWeight: 600 
+                                }}>
+                                    {nextInspectionDisplay === 'N/A' ? 'Não agendada' : nextInspectionDisplay}
                                 </span>
                             </div>
                         </div>
@@ -467,27 +659,32 @@ export const BuildingDetails: React.FC = () => {
                             <div className="section-card">
                                 <div className="section-header">
                                     <h3 className="section-title">Prestadores de Serviço</h3>
-                                    <button className="action-btn" onClick={() => setIsCreateProviderOpen(true)} style={{ padding: '4px 8px', fontSize: '0.875rem' }}>
-                                        <Plus size={14} style={{ marginRight: '4px' }} /> Novo
+                                    <button className="action-btn" onClick={() => setIsCreateProviderOpen(true)} style={{ height: '32px', borderRadius: '8px', padding: '0 12px', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <Plus size={14} /> Novo
                                     </button>
                                 </div>
 
-                                <div className="contact-list">
+                                <div className="contact-list" style={{ marginTop: '12px' }}>
                                     {providers.length === 0 ? <p style={{ fontSize: '0.875rem', color: '#64748b' }}>Nenhum prestador cadastrado.</p> : null}
                                     {providers.map(provider => (
-                                        <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ alignItems: 'flex-start', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                        <div key={provider.id} className="contact-item clickable-item" onClick={() => handleItemClick(provider, 'provider')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'white', marginBottom: '8px' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: '#475569' }}>
-                                                    {provider.name.charAt(0)}
+                                                <div className="hover-text-white" style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-accent)' }}>
+                                                    {provider.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                    <span className="contact-name hover-text-white" style={{ fontSize: '0.875rem' }}>{provider.name}</span>
-                                                    <span className="contact-role hover-text-white" style={{ fontSize: '0.75rem', marginTop: '2px', color: '#64748b' }}>
-                                                         {provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : provider.serviceType === 'PLUMBER' ? 'Encanador' : provider.serviceType === 'GARDENER' ? 'Jardineiro' : provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros'}
-                                                    </span>
-                                                    <span className="hover-text-white" style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>{provider.phone}</span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span className="contact-name hover-text-white" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-main)' }}>{provider.name}</span>
+                                                    {getProviderServiceBadge(provider.serviceType)}
+                                                    <span className="hover-text-white" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{formatPhone(provider.phone)}</span>
                                                 </div>
                                             </div>
+                                            <button 
+                                                className="action-btn"
+                                                style={{ minWidth: 'auto', padding: '6px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                title="Ver detalhes"
+                                            >
+                                                <ChevronRight size={16} color="var(--text-secondary)" />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>

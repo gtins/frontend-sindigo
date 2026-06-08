@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, LayoutGrid, Plus } from 'lucide-react';
+import { Search, Filter, LayoutGrid, Plus, Hotel } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { BuildingCard } from './BuildingCard';
 import CondominiumService from '../services/condominiumService';
@@ -80,10 +80,15 @@ export const BuildingsPage: React.FC = () => {
     }, [refreshKey]);
     return (
         <div className="content-wrapper">
-            <div className="page-header-container" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 className="page-title-main" style={{ fontSize: '1.6rem' }}>Prédios gerenciados</h2>
-                    <p className="page-subtitle-main" style={{ margin: '4px 0 0 0', fontSize: '0.875rem' }}>
+            <div className="page-header" style={{ marginBottom: 'var(--space-24)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Hotel size={22} color="var(--color-accent)" />
+                        </div>
+                        <h2 className="page-title" style={{ margin: 0 }}>Prédios gerenciados</h2>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                         Gerencie os condomínios cadastrados, unidades, chamados e status operacional.
                     </p>
                 </div>

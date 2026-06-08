@@ -123,14 +123,18 @@ export const GlobalDashboardPage: React.FC = () => {
 
     return (
         <div className="content-wrapper">
-            <div className="page-header-container">
-                <h2 className="page-title-main">
-                    <LayoutDashboard size={24} style={{ color: 'var(--color-accent)' }} />
-                    Dashboard Global
-                </h2>
-                <p className="page-subtitle-main">
-                    Visão geral dos prédios, chamados e atividades.
-                </p>
+            <div className="page-header" style={{ marginBottom: 'var(--space-24)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <LayoutDashboard size={22} color="var(--color-accent)" />
+                        </div>
+                        <h2 className="page-title" style={{ margin: 0 }}>Dashboard Global</h2>
+                    </div>
+                    <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        Visão geral dos prédios, chamados e atividades.
+                    </p>
+                </div>
             </div>
 
             <div className="dashboard-stats-grid">

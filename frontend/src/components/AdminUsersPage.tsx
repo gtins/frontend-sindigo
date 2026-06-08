@@ -75,16 +75,16 @@ export const AdminUsersPage: React.FC = () => {
     <div className="dashboard-container">
       <div className="content-wrapper">
         <div className="page-header" style={{ marginBottom: 'var(--space-24)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Shield size={22} color="var(--color-accent)" />
-            </div>
-            <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Shield size={22} color="var(--color-accent)" />
+              </div>
               <h2 className="page-title" style={{ margin: 0 }}>Controle de Acessos</h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Gerencie permissões e papéis dos usuários cadastrados no sistema.
-              </p>
             </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+              Gerencie permissões e papéis dos usuários cadastrados no sistema.
+            </p>
           </div>
         </div>
 

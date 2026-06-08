@@ -4,6 +4,8 @@ import type { Activity, Reservation, Ticket, Provider } from '../types';
 import CondominiumService from '../services/condominiumService';
 import AttachmentService from '../services/attachmentService';
 import type { Attachment } from '../services/attachmentService';
+import { CustomSelect } from './CustomSelect';
+
 
 interface ItemDetailsModalProps {
     isOpen: boolean;
@@ -241,65 +243,107 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
     let title = '';
     let content: React.ReactNode = null;
 
+    // Translation and mapping helpers
+    const translateTicketPriority = (p?: string) => {
+        switch (p?.toUpperCase()) {
+            case 'URGENTE': case 'CRITICA': case 'CRITICAL': return 'Crítica';
+            case 'ALTA': case 'HIGH': return 'Alta';
+            case 'MEDIA': case 'MEDIUM': return 'Média';
+            case 'BAIXA': case 'LOW': return 'Baixa';
+            default: return p || '-';
+        }
+    };
+
+    const translateTicketStatus = (s?: string) => {
+        switch (s?.toUpperCase()) {
+            case 'OPEN': case 'ABERTO': return 'Aberto';
+            case 'IN_PROGRESS': case 'EM_ANDAMENTO': return 'Em andamento';
+            case 'RESOLVED': case 'RESOLVIDO': return 'Resolvido';
+            case 'CLOSED': case 'FECHADO': return 'Fechado';
+            default: return s || '-';
+        }
+    };
+
+    const translateTicketCategory = (c?: string) => {
+        switch (c?.toUpperCase()) {
+            case 'SOLICITACAO': return 'Solicitação';
+            case 'RECLAMACAO': return 'Reclamação';
+            case 'ESTRUTURA': return 'Estrutura';
+            case 'ELETRICA': return 'Elétrica';
+            case 'LIMPEZA': return 'Limpeza';
+            case 'SEGURANCA': return 'Segurança';
+            case 'HIDRAULICA': return 'Hidráulica';
+            case 'MANUTENCAO': return 'Manutenção';
+            case 'OUTRO': case 'OUTROS': return 'Outros';
+            default: return c || '-';
+        }
+    };
+
     // Helper for rendering key-value rows
     const renderRow = (label: string, value: React.ReactNode) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
-            <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#475569' }}>{label}</span>
-            <span style={{ fontSize: '1rem', color: '#0f172a' }}>{value || '-'}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9', gap: '16px' }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{label}</span>
+            <span style={{ fontSize: '0.925rem', fontWeight: 600, color: 'var(--text-main)', textAlign: 'right' }}>{value || '-'}</span>
         </div>
     );
 
     if (type === 'activity') {
         const activity = item as Activity;
-        title = 'Detalhes da Atividade';
+        title = 'Detalhes da atividade';
         content = (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {renderRow('Título', activity.title)}
                 {renderRow('Descrição', activity.description)}
                 {renderRow('Tipo', activity.type === 'ONCE' ? 'Única' : 'Periódica')}
-                {renderRow('Data de Início', activity.startDate)}
-                {renderRow('Data de Fim', activity.endDate)}
-                {activity.status && renderRow('Status', activity.status)}
-                {activity.closedAt && renderRow('Data de Encerramento', new Date(activity.closedAt).toLocaleString('pt-BR'))}
-                {activity.closingNotes && renderRow('Notas de Encerramento', activity.closingNotes)}
+                {renderRow('Data de início', activity.startDate)}
+                {renderRow('Data final', activity.endDate)}
+                {activity.status && renderRow('Status', activity.status === 'COMPLETED' ? 'Concluída' : activity.status === 'CANCELLED' ? 'Cancelada' : 'Pendente')}
+                {activity.closedAt && renderRow('Encerramento', new Date(activity.closedAt).toLocaleString('pt-BR'))}
+                {activity.closingNotes && renderRow('Observações de encerramento', activity.closingNotes)}
             </div>
         );
     } else if (type === 'reservation') {
         const reservation = item as Reservation;
-        title = 'Detalhes da Reserva';
+        title = 'Detalhes da reserva';
+        const getStatusLabel = (s?: string) => {
+            if (s === 'CONFIRMED') return 'Confirmada';
+            if (s === 'PENDING') return 'Pendente';
+            if (s === 'CANCELLED') return 'Cancelada';
+            return s || '-';
+        };
         content = (
-            <div>
-                {renderRow('ID da Reserva', reservation.id)}
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {renderRow('ID da reserva', reservation.id)}
                 {renderRow('Área', reservation.area)}
                 {reservation.requestedByName && renderRow('Solicitado por', reservation.requestedByName)}
-                {reservation.requestedByUnit && renderRow('Unidade', reservation.requestedByUnit)}
+                {reservation.requestedByUnit && renderRow('Unidade solicitante', reservation.requestedByUnit)}
                 {renderRow('Criado em', reservation.createdAt ? new Date(reservation.createdAt).toLocaleString('pt-BR') : '')}
-                {renderRow('Início', reservation.startTime ? new Date(reservation.startTime).toLocaleString('pt-BR') : '')}
-                {renderRow('Fim', reservation.endTime ? new Date(reservation.endTime).toLocaleString('pt-BR') : '')}
-                {renderRow('Status', reservation.status)}
+                {renderRow('Início da reserva', reservation.startTime ? new Date(reservation.startTime).toLocaleString('pt-BR') : '')}
+                {renderRow('Fim da reserva', reservation.endTime ? new Date(reservation.endTime).toLocaleString('pt-BR') : '')}
+                {renderRow('Status', getStatusLabel(reservation.status))}
             </div>
         );
     } else if (type === 'ticket') {
         const ticket = item as Ticket;
-        title = 'Detalhes do Chamado';
+        title = 'Detalhes do chamado';
         content = (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {renderRow('Título', ticket.title)}
                 {renderRow('Descrição', ticket.description)}
-                {renderRow('Status', ticket.status)}
-                {renderRow('Prioridade', ticket.priority)}
-                {renderRow('Categoria', ticket.category)}
-                {ticket.closedAt && renderRow('Data de Encerramento', new Date(ticket.closedAt).toLocaleString('pt-BR'))}
-                {ticket.closingNotes && renderRow('Notas de Encerramento', ticket.closingNotes)}
+                {renderRow('Status', translateTicketStatus(ticket.status))}
+                {renderRow('Prioridade', translateTicketPriority(ticket.priority))}
+                {renderRow('Categoria', translateTicketCategory(ticket.category))}
+                {ticket.closedAt && renderRow('Encerramento', new Date(ticket.closedAt).toLocaleString('pt-BR'))}
+                {ticket.closingNotes && renderRow('Observações de encerramento', ticket.closingNotes)}
                 
-                <div style={{ marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
-                    <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#334155', marginBottom: '8px' }}>Fotos de Evidência</h4>
+                <div style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+                    <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fotos de evidência</h4>
                     {loadingAttachments ? (
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Carregando fotos...</span>
+                        <span style={{ fontSize: '0.825rem', color: 'var(--text-light)' }}>Carregando fotos...</span>
                     ) : attachments.length === 0 ? (
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Nenhuma foto anexada.</span>
+                        <span style={{ fontSize: '0.825rem', color: 'var(--text-light)' }}>Nenhuma foto anexada.</span>
                     ) : (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '4px' }}>
                             {attachments.map((att) => (
                                 <div 
                                     key={att.id} 
@@ -307,7 +351,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                     style={{
                                         cursor: 'pointer',
                                         border: '1px solid #cbd5e1',
-                                        borderRadius: '6px',
+                                        borderRadius: '12px',
                                         overflow: 'hidden',
                                         width: '80px',
                                         height: '80px',
@@ -315,8 +359,10 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        backgroundColor: '#f8fafc'
+                                        backgroundColor: '#f8fafc',
+                                        transition: 'all 0.2s'
                                     }}
+                                    className="clickable-item"
                                     title="Clique para ampliar"
                                 >
                                     {att.contentType?.startsWith('image/') && attachmentUrls[att.id] ? (
@@ -329,7 +375,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                         bottom: 0,
                                         left: 0,
                                         right: 0,
-                                        backgroundColor: 'rgba(0,0,0,0.6)',
+                                        backgroundColor: 'rgba(15, 23, 42, 0.75)',
                                         color: '#fff',
                                         fontSize: '0.6rem',
                                         textAlign: 'center',
@@ -349,9 +395,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
         );
     } else if (type === 'provider') {
         const provider = item as Provider;
-        title = 'Detalhes do Prestador de Serviço';
+        title = 'Detalhes do prestador';
         content = (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
                 {renderRow('Nome', provider.name)}
                 {renderRow('Telefone', provider.phone)}
                 {renderRow('Serviço', provider.serviceType === 'ELECTRICIAN' ? 'Eletricista' : 
@@ -359,12 +405,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                      provider.serviceType === 'GARDENER' ? 'Jardineiro' : 
                                      provider.serviceType === 'CARPENTER' ? 'Carpinteiro' : 'Outros')}
                                      
-                <div style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#1e293b', marginBottom: '12px' }}>Atividades Vinculadas</h3>
+                <div style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                    <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '12px' }}>Atividades vinculadas</h3>
                     {loadingActivities ? (
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Carregando atividades...</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Carregando atividades...</div>
                     ) : providerActivities.length === 0 ? (
-                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>Este prestador não está vinculado a nenhuma atividade.</div>
+                        <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Este prestador não está vinculado a nenhuma atividade.</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {providerActivities.map(act => {
@@ -373,29 +419,29 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                 
                                 return (
                                     <div key={actId} style={{ 
-                                        padding: '12px', 
+                                        padding: '16px', 
                                         border: '1px solid #e2e8f0', 
-                                        borderRadius: '8px', 
+                                        borderRadius: '16px', 
                                         backgroundColor: '#f8fafc',
                                         display: 'flex',
                                         flexDirection: 'column',
                                         gap: '8px'
                                     }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>{act.title}</span>
+                                            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{act.title}</span>
                                             <span style={{ 
                                                 fontSize: '0.75rem', 
-                                                padding: '2px 8px', 
-                                                borderRadius: '9999px',
+                                                padding: '4px 10px', 
+                                                borderRadius: '12px',
                                                 backgroundColor: act.status === 'COMPLETED' ? '#d1fae5' : act.status === 'CANCELLED' ? '#fee2e2' : '#fef3c7',
                                                 color: act.status === 'COMPLETED' ? '#065f46' : act.status === 'CANCELLED' ? '#991b1b' : '#92400e',
-                                                fontWeight: 500
+                                                fontWeight: 600
                                             }}>
                                                 {act.status === 'COMPLETED' ? 'Concluída' : act.status === 'CANCELLED' ? 'Cancelada' : 'Pendente'}
                                             </span>
                                         </div>
-                                        <span style={{ fontSize: '0.825rem', color: '#475569' }}>{act.description}</span>
-                                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                        <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>{act.description}</span>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
                                             Período: {act.startDate} até {act.endDate}
                                         </div>
                                         
@@ -408,15 +454,15 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                             gap: '8px'
                                         }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>Anexos / Nota Fiscal:</span>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Anexos / Nota Fiscal:</span>
                                                 <label style={{ 
                                                     fontSize: '0.75rem', 
-                                                    color: '#2563eb', 
+                                                    color: 'var(--color-primary)', 
                                                     cursor: 'pointer',
-                                                    fontWeight: 500,
+                                                    fontWeight: 600,
                                                     textDecoration: 'underline'
                                                 }}>
-                                                    Anexar Arquivo
+                                                    Anexar arquivo
                                                     <input 
                                                         type="file" 
                                                         onChange={(e) => {
@@ -432,12 +478,12 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                             {uploadingActivityId === actId ? (
                                                 <span style={{ fontSize: '0.75rem', color: '#3b82f6' }}>Enviando arquivo...</span>
                                             ) : attachments.length === 0 ? (
-                                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Nenhum anexo encontrado.</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Nenhum anexo encontrado.</span>
                                             ) : (
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                                     {attachments.map(att => (
-                                                        <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '6px 8px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-                                                            <span style={{ fontSize: '0.75rem', color: '#2563eb', textDecoration: 'underline', cursor: 'pointer', fontWeight: 500 }} onClick={() => handleViewActivityInvoice(att.id)}>
+                                                        <div key={att.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '6px 12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer', fontWeight: 600 }} onClick={() => handleViewActivityInvoice(att.id)}>
                                                                 📄 {att.name || `Anexo-${att.id.substring(0, 8)}`}
                                                             </span>
                                                             <button 
@@ -449,9 +495,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                                                     cursor: 'pointer', 
                                                                     fontSize: '0.75rem',
                                                                     padding: '2px 4px',
-                                                                    fontWeight: 500
+                                                                    fontWeight: 600
                                                                 }}
-                                                                title="Excluir Anexo"
+                                                                title="Excluir anexo"
                                                             >
                                                                 Excluir
                                                             </button>
@@ -471,51 +517,50 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
     }
 
     return (
-        <div style={overlayStyle}>
-            <div style={modalStyle}>
-                <div style={headerStyle}>
-                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>{title}</h2>
-                    <button onClick={onClose} style={closeBtnStyle}><X size={20} /></button>
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card">
+                <div className="modal-header">
+                    <h2 className="modal-title">{title}</h2>
+                    <button onClick={onClose} className="modal-close-btn"><X size={20} /></button>
                 </div>
                 
-                <div style={contentStyle}>
+                <div className="modal-body" style={{ gap: '4px' }}>
                     {content}
                     
                     {isClosing && (
-                        <div style={closeFormStyle}>
-                            <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: '12px' }}>Encerrar {type === 'ticket' ? 'Chamado' : 'Atividade'}</h3>
+                        <div style={{ marginTop: '24px', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '16px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginTop: 0, marginBottom: 0 }}>Encerrar {type === 'ticket' ? 'chamado' : 'atividade'}</h3>
                             
-                            <label style={labelStyle}>Status de Encerramento *</label>
-                            <select 
-                                value={closeStatus} 
-                                onChange={(e) => setCloseStatus(e.target.value)}
-                                style={inputStyle}
-                            >
-                                <option value="">Selecione um status...</option>
-                                {type === 'ticket' ? (
-                                    <>
-                                        <option value="RESOLVIDO">Resolvido</option>
-                                        <option value="FECHADO">Fechado</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option value="COMPLETED">Concluída</option>
-                                        <option value="CANCELLED">Cancelada</option>
-                                    </>
-                                )}
-                            </select>
+                            <div className="modal-input-group">
+                                <label className="modal-label">Status de encerramento *</label>
+                                <CustomSelect
+                                    value={closeStatus}
+                                    onChange={(val) => setCloseStatus(val)}
+                                    placeholder="Selecione um status..."
+                                    options={type === 'ticket' ? [
+                                        { value: 'RESOLVIDO', label: 'Resolvido' },
+                                        { value: 'FECHADO', label: 'Fechado' }
+                                    ] : [
+                                        { value: 'COMPLETED', label: 'Concluída' },
+                                        { value: 'CANCELLED', label: 'Cancelada' }
+                                    ]}
+                                />
+                            </div>
 
-                            <label style={labelStyle}>Notas de Encerramento *</label>
-                            <textarea 
-                                value={closingNotes} 
-                                onChange={(e) => setClosingNotes(e.target.value)}
-                                style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
-                                placeholder="Descreva os detalhes do encerramento..."
-                            />
+                            <div className="modal-input-group">
+                                <label className="modal-label">Notas de encerramento *</label>
+                                <textarea 
+                                    value={closingNotes} 
+                                    onChange={(e) => setClosingNotes(e.target.value)}
+                                    className="modal-textarea"
+                                    style={{ minHeight: '80px' }}
+                                    placeholder="Descreva os detalhes do encerramento..."
+                                />
+                            </div>
 
                             {type === 'ticket' && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '8px' }}>
-                                    <label style={labelStyle}>Fotos de Evidência de Fechamento (Máx. 3 fotos)</label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <label className="modal-label">Fotos de evidência de fechamento (Máx. 3 fotos)</label>
                                     <input 
                                         type="file" 
                                         multiple 
@@ -530,18 +575,19 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                                 setClosingFiles(prev => [...prev, ...filesArray]);
                                             }
                                         }} 
-                                        style={inputStyle}
+                                        className="modal-input"
+                                        style={{ padding: '8px 12px' }}
                                         disabled={isSubmitting}
                                     />
                                     {closingFiles.length > 0 && (
-                                        <div style={previewContainerStyle}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
                                             {closingFiles.map((file, idx) => (
-                                                <div key={idx} style={previewItemStyle}>
-                                                    <span style={previewNameStyle}>{file.name}</span>
+                                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem' }}>
+                                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '280px', fontWeight: 500, color: 'var(--text-main)' }}>{file.name}</span>
                                                     <button 
                                                         type="button" 
                                                         onClick={() => setClosingFiles(prev => prev.filter((_, i) => i !== idx))} 
-                                                        style={removeFileBtnStyle}
+                                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
                                                         disabled={isSubmitting}
                                                     >
                                                         Remover
@@ -553,9 +599,9 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                 </div>
                             )}
 
-                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                                <button onClick={() => setIsClosing(false)} style={cancelBtnStyle} disabled={isSubmitting}>Cancelar</button>
-                                <button onClick={handleCloseSubmit} style={submitBtnStyle} disabled={isSubmitting}>
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                                <button onClick={() => setIsClosing(false)} className="secondary-btn" style={{ height: '36px', borderRadius: '10px' }} disabled={isSubmitting}>Cancelar</button>
+                                <button onClick={handleCloseSubmit} className="primary-btn" style={{ height: '36px', borderRadius: '10px', backgroundColor: '#10b981' }} disabled={isSubmitting || !closeStatus || !closingNotes.trim()}>
                                     {isSubmitting ? 'Enviando...' : 'Confirmar'}
                                 </button>
                             </div>
@@ -563,174 +609,14 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                     )}
                 </div>
                 
-                <div style={footerStyle}>
+                <div className="modal-footer" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
                     {isAdminOrSindico && (type === 'activity' || type === 'ticket') && !isClosing && 
                      !['COMPLETED', 'CANCELLED', 'RESOLVED', 'CLOSED', 'RESOLVIDO', 'FECHADO'].includes((item as any).status) && (
-                        <button onClick={() => setIsClosing(true)} style={closeItemBtnStyle}>Encerrar</button>
+                        <button onClick={() => setIsClosing(true)} className="secondary-btn" style={{ height: '42px', borderRadius: '12px', border: '1px solid #ef4444', color: '#ef4444', marginRight: 'auto' }}>Encerrar</button>
                     )}
-                    <button onClick={onClose} style={closeActionBtnStyle}>Fechar</button>
+                    <button onClick={onClose} className="primary-btn" style={{ height: '42px', borderRadius: '12px' }}>Fechar</button>
                 </div>
             </div>
         </div>
     );
-};
-
-// Styles
-const overlayStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1100
-};
-
-const modalStyle: React.CSSProperties = {
-    backgroundColor: '#fff',
-    borderRadius: '8px',
-    width: '100%',
-    maxWidth: '500px',
-    padding: '24px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-    maxHeight: '90vh',
-    overflowY: 'auto'
-};
-
-const headerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    paddingBottom: '12px',
-    borderBottom: '1px solid #e2e8f0'
-};
-
-const closeBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#64748b',
-    padding: '4px'
-};
-
-const contentStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '4px'
-};
-
-const footerStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    marginTop: '24px',
-    paddingTop: '16px',
-    borderTop: '1px solid #e2e8f0'
-};
-
-const closeActionBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: '#3b82f6',
-    color: '#fff',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const closeItemBtnStyle: React.CSSProperties = {
-    padding: '8px 16px',
-    borderRadius: '6px',
-    border: '1px solid #ef4444',
-    backgroundColor: 'transparent',
-    color: '#ef4444',
-    fontWeight: 500,
-    cursor: 'pointer',
-    marginRight: 'auto'
-};
-
-const closeFormStyle: React.CSSProperties = {
-    marginTop: '20px',
-    padding: '16px',
-    backgroundColor: '#f8fafc',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-};
-
-const labelStyle: React.CSSProperties = {
-    fontSize: '0.875rem',
-    fontWeight: 600,
-    color: '#475569',
-    marginBottom: '4px'
-};
-
-const inputStyle: React.CSSProperties = {
-    padding: '8px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    fontSize: '0.875rem',
-    width: '100%',
-    boxSizing: 'border-box'
-};
-
-const cancelBtnStyle: React.CSSProperties = {
-    padding: '6px 12px',
-    borderRadius: '6px',
-    border: '1px solid #cbd5e1',
-    backgroundColor: '#fff',
-    color: '#475569',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const submitBtnStyle: React.CSSProperties = {
-    padding: '6px 12px',
-    borderRadius: '6px',
-    border: 'none',
-    backgroundColor: '#10b981',
-    color: '#fff',
-    fontWeight: 500,
-    cursor: 'pointer'
-};
-
-const previewContainerStyle: React.CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-    marginTop: '8px',
-    backgroundColor: '#f8fafc',
-    padding: '8px',
-    borderRadius: '6px',
-    border: '1px dashed #cbd5e1'
-};
-
-const previewItemStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '0.75rem',
-    color: '#334155',
-    backgroundColor: '#fff',
-    padding: '6px 8px',
-    borderRadius: '4px',
-    border: '1px solid #e2e8f0'
-};
-
-const previewNameStyle: React.CSSProperties = {
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
-    maxWidth: '280px'
-};
-
-const removeFileBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    color: '#ef4444',
-    cursor: 'pointer',
-    fontSize: '0.75rem',
-    fontWeight: 500
 };
