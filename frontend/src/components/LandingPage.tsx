@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Building2,
   ArrowRight,
-  ChevronRight,
   AlertCircle,
-  Clock,
   CheckCircle2,
   LayoutDashboard,
   Hotel,
@@ -21,7 +19,6 @@ import {
   Globe,
   UserCheck,
   BarChart3,
-  Sparkles
 } from 'lucide-react';
 import AuthService from '../services/authService';
 import '../styles/landing.css';
@@ -105,7 +102,7 @@ export const LandingPage: React.FC = () => {
               </svg>
             )}
           </button>
-          
+
           <button className="landing-btn landing-btn-sec" onClick={() => navigate('/login')}>
             Entrar
           </button>
@@ -137,7 +134,7 @@ export const LandingPage: React.FC = () => {
 
           <div className="hero-visual">
             <div className="hero-bg-glow"></div>
-            
+
             {/* Mockup do Dashboard */}
             <div className="hero-mockup">
               <div className="mockup-header">
@@ -360,7 +357,7 @@ export const LandingPage: React.FC = () => {
 
         <div className="timeline-container">
           <div className="timeline-line"></div>
-          
+
           <div className="timeline-step">
             <div className="timeline-number">1</div>
             <h4 className="timeline-title">Cadastre o Condomínio</h4>
@@ -793,11 +790,11 @@ export const LandingPage: React.FC = () => {
                   {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'].map((d, i) => (
                     <div className="preview-calendar-header-cell" key={i}>{d}</div>
                   ))}
-                  
+
                   {/* Empty cells for calendar layout alignment */}
                   <div className="preview-calendar-day empty"></div>
                   <div className="preview-calendar-day empty"></div>
-                  
+
                   <div className="preview-calendar-day">
                     <span className="preview-calendar-day-num">1</span>
                   </div>
