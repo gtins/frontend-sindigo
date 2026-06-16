@@ -14,6 +14,49 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         return document.documentElement.classList.contains('dark') || localStorage.getItem('sindigo-theme') === 'dark';
     });
+    const [user, setUser] = useState(() => {
+        const cachedRole = localStorage.getItem('role') || 'MORADOR';
+        return {
+            name: cachedRole === 'ADMIN' ? 'Administrador' : 'Usuário',
+            email: '',
+            role: cachedRole
+        };
+    });
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const data = await AuthService.getCurrentUser();
+                if (data) {
+                    setUser({
+                        name: data.name,
+                        email: data.email,
+                        role: data.role
+                    });
+                }
+            } catch (err) {
+                console.error('Erro ao buscar perfil do usuário logado:', err);
+            }
+        };
+        fetchUserData();
+    }, []);
+
+    const formatRole = (roleStr: string) => {
+        const role = roleStr.toUpperCase();
+        if (role.includes('ADMIN')) return 'Admin Geral';
+        if (role.includes('SINDICO')) return 'Síndico';
+        if (role.includes('MORADOR')) return 'Morador';
+        return roleStr;
+    };
+
+    const getInitials = (nameStr: string) => {
+        if (!nameStr) return 'U';
+        const parts = nameStr.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+        return nameStr.substring(0, 2).toUpperCase();
+    };
 
     useEffect(() => {
         if (isDarkMode) {
@@ -130,9 +173,9 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                         <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>Administrador</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.2 }}>{user.name}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-light)', lineHeight: 1.2, marginTop: '2px' }}>
-                                {localStorage.getItem('role')?.includes('ADMIN') ? 'Admin Geral' : localStorage.getItem('role') || 'Morador'}
+                                {formatRole(user.role)}
                             </span>
                         </div>
                         <div style={{ 
@@ -148,7 +191,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                             fontSize: '13px',
                             boxShadow: '0 2px 4px rgba(79, 70, 229, 0.15)'
                         }}>
-                            AD
+                            {getInitials(user.name)}
                         </div>
                         <ChevronDown size={16} color="#94a3b8" style={{ transition: 'transform 0.2s', transform: showUserMenu ? 'rotate(180deg)' : 'none' }} />
                     </button>
@@ -168,8 +211,8 @@ export const TopBar: React.FC<TopBarProps> = ({ onHomeClick }) => {
                             overflow: 'hidden'
                         }}>
                             <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface-2)' }}>
-                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>Administrador</div>
-                                <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>admin@sindigo.com</div>
+                                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>{user.name}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-light)', marginTop: '4px' }}>{user.email || '—'}</div>
                             </div>
                             <div style={{ padding: '8px' }}>
                                 <button
