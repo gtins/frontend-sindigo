@@ -33,6 +33,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
     const [loadingActivities, setLoadingActivities] = useState(false);
     const [activityAttachments, setActivityAttachments] = useState<Record<string, Attachment[]>>({});
     const [uploadingActivityId, setUploadingActivityId] = useState<string | null>(null);
+    const [showAllActivities, setShowAllActivities] = useState(false);
 
     // Reset state when modal opens/closes
     React.useEffect(() => {
@@ -47,6 +48,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
             setProviderActivities([]);
             setActivityAttachments({});
             setUploadingActivityId(null);
+            setShowAllActivities(false);
         }
     }, [isOpen]);
 
@@ -413,7 +415,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                         <div style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>Este prestador não está vinculado a nenhuma atividade.</div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {providerActivities.map(act => {
+                            {(showAllActivities ? providerActivities : providerActivities.slice(0, 2)).map(act => {
                                 const actId = act.activityId || act.id;
                                 const attachments = activityAttachments[actId] || [];
                                 
@@ -509,6 +511,24 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                                     </div>
                                 );
                             })}
+                            
+                            {providerActivities.length > 2 && (
+                                <button
+                                    onClick={() => setShowAllActivities(!showAllActivities)}
+                                    className="secondary-btn"
+                                    style={{
+                                        marginTop: '4px',
+                                        alignSelf: 'center',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600,
+                                        padding: '8px 16px',
+                                        height: 'auto',
+                                        borderRadius: '10px'
+                                    }}
+                                >
+                                    {showAllActivities ? 'Ver menos' : `Ver mais (${providerActivities.length - 2})`}
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

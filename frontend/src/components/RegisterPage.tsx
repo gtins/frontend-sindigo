@@ -41,11 +41,19 @@ const RegisterPage: React.FC = () => {
       alert('Cadastro realizado com sucesso! Faça login para continuar.');
       navigate('/login');
     } catch (err: any) {
-        if (err.response && err.response.data && err.response.data.error) {
-            setError(err.response.data.error);
-        } else {
-            setError(err.message || 'Erro ao realizar o cadastro.');
+        const rawMsg = err.response?.data?.message || err.response?.data?.error || err.message || '';
+        let msg = 'Erro ao realizar o cadastro.';
+        if (rawMsg) {
+          const msgLower = rawMsg.toLowerCase();
+          if (msgLower.includes('already exists') || msgLower.includes('already registered') || msgLower.includes('already in use') || msgLower.includes('duplicado')) {
+            msg = 'Este e-mail já está cadastrado.';
+          } else if (msgLower.includes('invalid email') || msgLower.includes('must be a valid email')) {
+            msg = 'Por favor, insira um e-mail válido.';
+          } else {
+            msg = rawMsg;
+          }
         }
+        setError(msg);
     } finally {
       setIsLoading(false);
     }

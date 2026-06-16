@@ -766,6 +766,8 @@
     z-index: 2000;
     animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     border: 1px solid #bbf7d0;
+    width: max-content;
+    max-width: min(480px, 90vw);
 }
 
 .members-toast-close {
@@ -1156,6 +1158,7 @@
         margin-bottom: var(--space-md);
     }
     
+    
     .page-title-main {
         font-size: 1.4rem;
     }
@@ -1165,5 +1168,57 @@
         margin-top: 2px;
     }
 }
+
+/* Compact Stat Card Styles */
+.dashboard-stat-card.compact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 20px;
+}
+
+.dashboard-stat-card.compact-card .stat-card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1;
+}
+
+.dashboard-stat-card.compact-card .stat-card-title {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 2px 0 0 0;
+}
+
+.dashboard-stat-card.compact-card .stat-card-trend {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.text-blue-trend {
+    color: #2563eb;
+}
+.text-red-trend {
+    color: #ef4444;
+}
+.text-amber-trend {
+    color: #d97706;
+}
+.text-green-trend {
+    color: #10b981;
+}
+
+/* Red Date Badge for Overdue Activities */
+.date-badge-compact.badge-red {
+    background-color: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+}
+
 
 

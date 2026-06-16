@@ -598,7 +598,9 @@
 .dark [style*="background-color: #e0f2fe"],
 .dark [style*="background-color: rgb(224, 242, 254)"],
 .dark [style*="background-color: #eff6ff"],
-.dark [style*="background-color: rgb(239, 246, 255)"] {
+.dark [style*="background-color: rgb(239, 246, 255)"],
+.dark [style*="background-color: #e0e7ff"],
+.dark [style*="background-color: rgb(224, 231, 255)"] {
     background-color: rgba(99, 102, 241, 0.15) !important;
     color: #60a5fa !important;
     border-color: rgba(99, 102, 241, 0.25) !important;
@@ -681,3 +683,26 @@
 .dark .members-table tbody tr:hover {
     background-color: var(--bg-hover) !important;
 }
+
+/* Members Toast Dark Mode Overrides */
+.dark .members-toast {
+    background-color: var(--bg-surface) !important;
+    background: var(--bg-surface) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .members-toast span {
+    color: var(--text-main) !important;
+}
+
+.dark .members-toast-close {
+    color: var(--text-secondary) !important;
+    background: transparent !important;
+}
+
+.dark .members-toast-close:hover {
+    background-color: var(--bg-hover) !important;
+    color: var(--text-main) !important;
+}
+

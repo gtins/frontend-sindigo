@@ -250,7 +250,7 @@ export const CondominiumMembersPage: React.FC = () => {
 
       {/* Breadcrumb & Header */}
       <div className="members-breadcrumb">
-        <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>Condomínios</span>
+        <span style={{ cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>Condomínios</span>
         <ChevronRight size={12} />
         <span style={{ cursor: 'pointer' }} onClick={() => navigate(`/buildings/${condominiumId}`)}>{condominiumName || 'Condomínio'}</span>
         <ChevronRight size={12} />

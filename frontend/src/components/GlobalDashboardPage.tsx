@@ -99,8 +99,43 @@ export const GlobalDashboardPage: React.FC = () => {
         fetchGlobalData();
     }, [refreshKey]);
 
-    const upcomingActivities = activities
-        .filter(a => a.status !== 'CLOSED')
+    const getRelativeDateLabel = (dateStr: string) => {
+        if (!dateStr) return '';
+        const activityDate = new Date(dateStr);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const targetDate = new Date(activityDate);
+        targetDate.setHours(0,0,0,0);
+        
+        const diffTime = targetDate.getTime() - today.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) return 'hoje';
+        if (diffDays === 1) return 'amanhã';
+        if (diffDays > 1) return `em ${diffDays} dias`;
+        if (diffDays === -1) return 'venceu ontem';
+        return `venceu há ${Math.abs(diffDays)} dias`;
+    };
+
+    const activeActivities = activities.filter(a => a.status !== 'CLOSED' && a.startDate);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    const upcomingActivities = activeActivities
+        .filter(a => {
+            const targetDate = new Date(a.startDate);
+            targetDate.setHours(0,0,0,0);
+            return targetDate.getTime() >= today.getTime();
+        })
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .slice(0, 5);
+
+    const overdueActivities = activeActivities
+        .filter(a => {
+            const targetDate = new Date(a.startDate);
+            targetDate.setHours(0,0,0,0);
+            return targetDate.getTime() < today.getTime();
+        })
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
         .slice(0, 5);
 
@@ -112,6 +147,23 @@ export const GlobalDashboardPage: React.FC = () => {
     const openTicketsCount = tickets.filter(t => ['OPEN', 'ABERTO'].includes(t.status)).length;
     const pendingReservationsCount = reservations.filter(r => r.status === 'PENDING').length;
     const closedTicketsCount = tickets.filter(t => ['CLOSED', 'CONCLUIDO', 'CONCLUÍDO', 'RESOLVIDO', 'RESOLVED'].includes(t.status)).length;
+
+    // Calculate closed tickets in the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const closedThisWeekCount = tickets.filter(t => {
+        const isClosed = ['CLOSED', 'CONCLUIDO', 'CONCLUÍDO', 'RESOLVIDO', 'RESOLVED'].includes(t.status);
+        if (!isClosed) return false;
+        const closedDateStr = t.closedAt || t.createdAt;
+        if (!closedDateStr) return false;
+        return new Date(closedDateStr).getTime() >= sevenDaysAgo.getTime();
+    }).length;
+
+    // Calculate high/urgent priority open tickets
+    const urgentTicketsCount = tickets.filter(t => 
+        ['OPEN', 'ABERTO'].includes(t.status) && 
+        ['ALTA', 'CRITICA', 'URGENTE'].includes(t.priority)
+    ).length;
 
     if (loading) {
         return (
@@ -138,56 +190,44 @@ export const GlobalDashboardPage: React.FC = () => {
             </div>
 
             <div className="dashboard-stats-grid">
-                <div className="dashboard-stat-card card-blue">
-                    <div className="stat-card-left">
-                        <div className="stat-icon-wrapper">
-                            <Hotel size={20} />
-                        </div>
+                <div className="dashboard-stat-card card-blue compact-card">
+                    <div className="stat-card-header-row">
+                        <Hotel size={20} style={{ color: '#2563eb' }} />
+                        <span>{condos.length}</span>
                     </div>
-                    <div className="stat-card-right">
-                        <span className="stat-card-label">Prédios cadastrados</span>
-                        <span className="stat-card-value">{condos.length}</span>
-                        <span className="stat-card-desc">Total cadastrado</span>
-                    </div>
+                    <span className="stat-card-title">Prédios cadastrados</span>
+                    <span className="stat-card-trend text-blue-trend">Total ativos</span>
                 </div>
 
-                <div className="dashboard-stat-card card-red">
-                    <div className="stat-card-left">
-                        <div className="stat-icon-wrapper">
-                            <AlertCircle size={20} />
-                        </div>
+                <div className="dashboard-stat-card card-red compact-card">
+                    <div className="stat-card-header-row">
+                        <AlertCircle size={20} style={{ color: '#ef4444' }} />
+                        <span>{openTicketsCount}</span>
                     </div>
-                    <div className="stat-card-right">
-                        <span className="stat-card-label">Chamados abertos</span>
-                        <span className="stat-card-value text-red">{openTicketsCount}</span>
-                        <span className="stat-card-desc">Aguardando atendimento</span>
-                    </div>
+                    <span className="stat-card-title">Chamados abertos</span>
+                    <span className="stat-card-trend text-red-trend">
+                        {urgentTicketsCount > 0 ? `${urgentTicketsCount} urgentes` : 'Aguardando'}
+                    </span>
                 </div>
 
-                <div className="dashboard-stat-card card-amber">
-                    <div className="stat-card-left">
-                        <div className="stat-icon-wrapper">
-                            <Clock size={20} />
-                        </div>
+                <div className="dashboard-stat-card card-amber compact-card">
+                    <div className="stat-card-header-row">
+                        <Clock size={20} style={{ color: '#d97706' }} />
+                        <span>{pendingReservationsCount}</span>
                     </div>
-                    <div className="stat-card-right">
-                        <span className="stat-card-label">Reservas pendentes</span>
-                        <span className="stat-card-value text-amber">{pendingReservationsCount}</span>
-                        <span className="stat-card-desc">Aguardando aprovação</span>
-                    </div>
+                    <span className="stat-card-title">Reservas pendentes</span>
+                    <span className="stat-card-trend text-amber-trend">Aguardando</span>
                 </div>
 
-                <div className="dashboard-stat-card card-green">
-                    <div className="stat-card-left">
-                        <div className="stat-icon-wrapper">
-                            <CheckSquare size={20} />
-                        </div>
+                <div className="dashboard-stat-card card-green compact-card">
+                    <div className="stat-card-header-row">
+                        <CheckSquare size={20} style={{ color: '#10b981' }} />
+                        <span>{closedTicketsCount}</span>
                     </div>
-                    <div className="stat-card-right">
-                        <span className="stat-card-label">Chamados concluídos</span>
-                        <span className="stat-card-value text-green">{closedTicketsCount}</span>
-                        <span className="stat-card-desc">Total resolvido</span>
-                    </div>
+                    <span className="stat-card-title">Chamados concluídos</span>
+                    <span className="stat-card-trend text-green-trend">
+                        {closedThisWeekCount > 0 ? `+${closedThisWeekCount} esta semana` : '0 esta semana'}
+                    </span>
                 </div>
             </div>
 
@@ -231,30 +271,61 @@ export const GlobalDashboardPage: React.FC = () => {
                     <div className="section-card">
                         <div className="section-header">
                             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Calendar size={18} style={{ color: 'var(--color-accent)' }} /> Próximas atividades
+                                <Calendar size={18} style={{ color: 'var(--color-accent)' }} /> Atividades
                             </h3>
                             <button className="text-action-btn" onClick={() => navigate('/calendar')}>
                                 Ver calendário <span className="arrow">→</span>
                             </button>
                         </div>
                         <div className="summary-list">
-                            {upcomingActivities.length === 0 ? (
-                                <p style={{ padding: '16px', color: 'var(--text-light)', fontSize: '0.875rem' }}>Nenhuma atividade próxima.</p>
+                            {overdueActivities.length === 0 && upcomingActivities.length === 0 ? (
+                                <p style={{ padding: '16px', color: 'var(--text-light)', fontSize: '0.875rem' }}>Nenhuma atividade pendente.</p>
                             ) : (
-                                upcomingActivities.map((a, idx) => (
-                                    <div key={idx} className="summary-item-refactored clickable-item" onClick={() => { setSelectedItem(a); setItemType('activity'); }}>
-                                        <div className="summary-icon-refactored icon-blue-light">
-                                            <Calendar size={18} />
-                                        </div>
-                                        <div className="summary-info-refactored">
-                                            <span className="summary-title-main">{a.title}</span>
-                                            <span className="summary-meta-sub">{a.condominiumName || 'Sem condomínio'}</span>
-                                        </div>
-                                        <div className="date-badge-compact">
-                                            {new Date(a.startDate).toLocaleDateString('pt-BR')}
-                                        </div>
-                                    </div>
-                                ))
+                                <>
+                                    {overdueActivities.length > 0 && (
+                                        <>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#ef4444', padding: '8px 16px 4px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <AlertCircle size={14} /> Atividades atrasadas ({overdueActivities.length})
+                                            </div>
+                                            {overdueActivities.map((a, idx) => (
+                                                <div key={`overdue-${idx}`} className="summary-item-refactored clickable-item" onClick={() => { setSelectedItem(a); setItemType('activity'); }}>
+                                                    <div className="summary-icon-refactored" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                                                        <AlertCircle size={18} />
+                                                    </div>
+                                                    <div className="summary-info-refactored">
+                                                        <span className="summary-title-main">{a.title}</span>
+                                                        <span className="summary-meta-sub">{a.condominiumName || 'Sem condomínio'}</span>
+                                                    </div>
+                                                    <div className="date-badge-compact badge-red">
+                                                        {getRelativeDateLabel(a.startDate)}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+
+                                    {upcomingActivities.length > 0 && (
+                                        <>
+                                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', padding: overdueActivities.length > 0 ? '16px 16px 4px 16px' : '8px 16px 4px 16px' }}>
+                                                Próximas atividades ({upcomingActivities.length})
+                                            </div>
+                                            {upcomingActivities.map((a, idx) => (
+                                                <div key={`upcoming-${idx}`} className="summary-item-refactored clickable-item" onClick={() => { setSelectedItem(a); setItemType('activity'); }}>
+                                                    <div className="summary-icon-refactored icon-blue-light">
+                                                        <Calendar size={18} />
+                                                    </div>
+                                                    <div className="summary-info-refactored">
+                                                        <span className="summary-title-main">{a.title}</span>
+                                                        <span className="summary-meta-sub">{a.condominiumName || 'Sem condomínio'}</span>
+                                                    </div>
+                                                    <div className="date-badge-compact">
+                                                        {getRelativeDateLabel(a.startDate)}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

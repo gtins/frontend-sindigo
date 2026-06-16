@@ -312,7 +312,7 @@ export const BuildingDetails: React.FC = () => {
             <div className="content-wrapper">
                 <div className="details-header" style={{ marginBottom: '16px' }}>
                     <div className="breadcrumbs" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.825rem', color: 'var(--text-light)', marginBottom: '16px', fontWeight: 500 }}>
-                        <span className="breadcrumb-item" onClick={() => navigate('/')} style={{ color: 'var(--text-light)' }}>Visão geral</span>
+                        <span className="breadcrumb-item" onClick={() => navigate('/dashboard')} style={{ color: 'var(--text-light)' }}>Visão geral</span>
                         <ChevronRight size={12} color="var(--text-light)" />
                         <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{condominium.name === 'a' ? 'Condomínio Mare di Capri' : condominium.name || 'Sem nome cadastrado'}</span>
                     </div>

@@ -17,6 +17,7 @@ import { CreateCondominiumModal } from './components/CreateCondominiumModal';
 import { AdminUsersPage } from './components/AdminUsersPage';
 import { AdminAuditPage } from './components/AdminAuditPage';
 import { CondominiumMembersPage } from './components/CondominiumMembersPage';
+import { LandingPage } from './components/LandingPage';
 import './styles/global.css';
 
 function AppLayout() {
@@ -40,7 +41,7 @@ function AppLayout() {
       <Sidebar />
       <main className="main-content">
         <TopBar
-          onHomeClick={() => navigate('/')}
+          onHomeClick={() => navigate('/dashboard')}
           onCreateBuildingClick={() => setIsCreateModalOpen(true)}
         />
 
@@ -75,6 +76,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Rotas públicas */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
@@ -82,7 +84,7 @@ function App() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
 
           {/* Global Pages */}
-          <Route path="/" element={<GlobalDashboardPage />} />
+          <Route path="/dashboard" element={<GlobalDashboardPage />} />
           <Route path="/buildings" element={<BuildingsPage />} />
           <Route path="/calendar" element={<GlobalCalendarPage />} />
           <Route path="/tickets" element={<GlobalTicketsPage />} />

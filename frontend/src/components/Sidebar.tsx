@@ -21,8 +21,8 @@ export const Sidebar: React.FC<SidebarProps> = () => {
     const location = useLocation();
 
     const isActive = (path: string) => {
-        if (path === '/') {
-            return location.pathname === '/';
+        if (path === '/dashboard') {
+            return location.pathname === '/dashboard';
         }
         return location.pathname.startsWith(path);
     };
@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                 <h4 className="sidebar-header">Navegação</h4>
 
                 <nav className="nav-menu">
-                    <Link to="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>
+                    <Link to="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
                         <LayoutDashboard className="nav-icon" size={20} />
                         <span>Dashboard</span>
                     </Link>

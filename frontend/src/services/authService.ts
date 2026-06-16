@@ -154,7 +154,7 @@ export class AuthService {
    */
   static async refreshAuthToken(): Promise<AuthResponse> {
     const refreshToken = this.getRefreshToken();
-    if (!refreshToken) throw new Error('No refresh token available');
+    if (!refreshToken) throw new Error('Sessão expirada. Por favor, faça login novamente.');
 
     try {
       // Fazemos a chamada contornando o interceptor usando axios puro ou ignorando auth

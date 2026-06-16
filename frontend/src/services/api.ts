@@ -58,6 +58,38 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
+    // Adequação e tradução de mensagens de erro para o usuário
+    if (error.response) {
+      const status = error.response.status;
+      let msg = error.response.data?.message || error.response.data?.error || '';
+      
+      if (!msg) {
+        if (status === 400) msg = 'Solicitação inválida. Verifique os dados fornecidos.';
+        else if (status === 401) msg = 'Não autorizado. Por favor, realize o login novamente.';
+        else if (status === 403) msg = 'Acesso negado. Você não tem permissão para realizar esta ação.';
+        else if (status === 404) msg = 'O recurso solicitado não foi encontrado.';
+        else if (status === 500) msg = 'Erro interno do servidor. Tente novamente mais tarde.';
+        else msg = `Erro no servidor (${status}). Tente novamente.`;
+      } else if (typeof msg === 'string') {
+        const msgLower = msg.toLowerCase();
+        if (msgLower.includes('access denied')) {
+          msg = 'Acesso negado. Você não tem permissão para realizar esta ação.';
+        } else if (msgLower.includes('bad credentials') || msgLower.includes('invalid credentials') || msgLower.includes('user not found') || msgLower.includes('senha incorreta')) {
+          msg = 'E-mail ou senha incorretos.';
+        } else if (msgLower.includes('already exists') || msgLower.includes('already registered') || msgLower.includes('already in use') || msgLower.includes('duplicado')) {
+          msg = 'Este e-mail já está cadastrado.';
+        } else if (msgLower.includes('no refresh token')) {
+          msg = 'Sessão expirada. Por favor, faça login novamente.';
+        }
+      }
+      
+      error.message = msg;
+      if (!error.response.data) error.response.data = {};
+      error.response.data.message = msg;
+    } else if (error.request) {
+      error.message = 'Não foi possível conectar ao servidor. Verifique sua conexão de rede.';
+    }
+
     const originalRequest = error.config;
     const token = localStorage.getItem('auth_token');
     const expired = isTokenExpired(token);

@@ -34,7 +34,7 @@ export const BuildingFinances: React.FC<BuildingFinancesProps> = ({ data }) => {
             <div className="content-wrapper">
                 <div className="details-header">
                     <div className="breadcrumbs">
-                        <span className="breadcrumb-item" onClick={() => navigate('/')}>Visão geral</span>
+                        <span className="breadcrumb-item" onClick={() => navigate('/dashboard')}>Visão geral</span>
                         <ChevronRight size={14} />
                         <span className="breadcrumb-item" onClick={() => navigate(`/buildings/${condominiumId}`)}>{data.name}</span>
                         <ChevronRight size={14} />

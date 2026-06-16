@@ -34,7 +34,21 @@ const LoginPage: React.FC = () => {
       if (err.response && err.response.status === 429) {
         setError('Muitas tentativas falhas. Por segurança, aguarde 15 minutos e tente novamente.');
       } else {
-        setError(err.response?.data?.message || err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+        const rawMsg = err.response?.data?.message || err.message || '';
+        let msg = 'Erro ao fazer login. Verifique suas credenciais.';
+        if (rawMsg) {
+          const msgLower = rawMsg.toLowerCase();
+          if (msgLower.includes('bad credentials') || msgLower.includes('invalid credentials') || msgLower.includes('incorrect password') || msgLower.includes('senha incorreta')) {
+            msg = 'E-mail ou senha incorretos.';
+          } else if (msgLower.includes('no refresh token') || msgLower.includes('refresh token') || msgLower.includes('sessão expirada')) {
+            msg = 'Sessão expirada. Por favor, faça login novamente.';
+          } else if (msgLower.includes('user not found')) {
+            msg = 'Usuário não encontrado.';
+          } else {
+            msg = rawMsg;
+          }
+        }
+        setError(msg);
       }
     } finally {
       setIsLoading(false);
