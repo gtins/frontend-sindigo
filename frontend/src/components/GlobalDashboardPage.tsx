@@ -35,7 +35,7 @@ export const GlobalDashboardPage: React.FC = () => {
                     ...item,
                     id: item.condominiumId || item.id,
                     name: item.condominiumName || item.name
-                }));
+                })).filter((c: any) => c.active !== false);
                 
                 setCondos(parsedCondos);
 
@@ -271,7 +271,7 @@ export const GlobalDashboardPage: React.FC = () => {
                     <div className="section-card">
                         <div className="section-header">
                             <h3 className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Calendar size={18} style={{ color: 'var(--color-accent)' }} /> Atividades
+                                <Calendar size={18} style={{ color: 'var(--color-accent)' }} /> Próximas atividades
                             </h3>
                             <button className="text-action-btn" onClick={() => navigate('/calendar')}>
                                 Ver calendário <span className="arrow">→</span>

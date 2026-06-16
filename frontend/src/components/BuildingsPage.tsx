@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, LayoutGrid, Plus, Hotel } from 'lucide-react';
+import { Search, Filter, LayoutGrid, Plus, Hotel, Check } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { BuildingCard } from './BuildingCard';
 import CondominiumService from '../services/condominiumService';
@@ -10,7 +10,12 @@ export const BuildingsPage: React.FC = () => {
     const navigate = useNavigate();
     const { refreshKey = 0, setIsCreateModalOpen } = useOutletContext<{ refreshKey: number, setIsCreateModalOpen: (open: boolean) => void }>() || {};
 
-    const [condos, setCondos] = useState<Condominium[]>([]);
+    const [allCondos, setAllCondos] = useState<Condominium[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [showInactive, setShowInactive] = useState(false);
+    const [showSortOptions, setShowSortOptions] = useState(false);
+    const [sortBy, setSortBy] = useState<'name-asc' | 'tickets-desc' | 'updated-desc' | 'status-desc'>('name-asc');
     const [ticketsMap, setTicketsMap] = useState<Record<string, number>>({});
     const [loading, setLoading] = useState(true);
 
@@ -43,7 +48,7 @@ export const BuildingsPage: React.FC = () => {
                     });
                 }
 
-                setCondos(data);
+                setAllCondos(data);
 
                 // Fetch tickets count for each condo
                 const ticketsResults = await Promise.all(data.map(async (condo: Condominium) => {
@@ -78,6 +83,66 @@ export const BuildingsPage: React.FC = () => {
 
         fetchCondominiums();
     }, [refreshKey]);
+
+    const filteredCondos = allCondos.filter(condo => {
+        if (!showInactive && condo.active === false) {
+            return false;
+        }
+        if (searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const nameMatch = condo.name?.toLowerCase().includes(query);
+            const addressMatch = condo.address?.toLowerCase().includes(query);
+            if (!nameMatch && !addressMatch) return false;
+        }
+        return true;
+    });
+
+    const sortOptions = [
+        { value: 'name-asc', label: 'Nome: A-Z' },
+        { value: 'tickets-desc', label: 'Mais chamados abertos' },
+        { value: 'updated-desc', label: 'Atualizados recentemente' },
+        { value: 'status-desc', label: 'Status crítico primeiro' }
+    ] as const;
+
+    const getSortLabel = (value: typeof sortBy) => {
+        const option = sortOptions.find(opt => opt.value === value);
+        return option ? option.label : 'A-Z';
+    };
+
+    const sortedCondos = [...filteredCondos].sort((a, b) => {
+        if (sortBy === 'name-asc') {
+            return (a.name || '').localeCompare(b.name || '');
+        }
+        if (sortBy === 'tickets-desc') {
+            const ticketsA = ticketsMap[a.id as string] || 0;
+            const ticketsB = ticketsMap[b.id as string] || 0;
+            return ticketsB - ticketsA;
+        }
+        if (sortBy === 'updated-desc') {
+            const dateA = new Date((a as any).updatedAt || (a as any).createdAt || 0).getTime();
+            const dateB = new Date((b as any).updatedAt || (b as any).createdAt || 0).getTime();
+            if (dateA !== dateB) {
+                return dateB - dateA;
+            }
+            return (a.name || '').localeCompare(b.name || '');
+        }
+        if (sortBy === 'status-desc') {
+            const getStatusScore = (condoId: string) => {
+                const openTickets = ticketsMap[condoId] || 0;
+                if (openTickets > 5) return 3; // Warning (Red)
+                if (openTickets > 0) return 2; // Attention (Orange)
+                return 1; // Healthy (Green)
+            };
+            const scoreA = getStatusScore(a.id as string);
+            const scoreB = getStatusScore(b.id as string);
+            if (scoreA !== scoreB) {
+                return scoreB - scoreA;
+            }
+            return (a.name || '').localeCompare(b.name || '');
+        }
+        return 0;
+    });
+
     return (
         <div className="content-wrapper">
             <div className="page-header" style={{ marginBottom: 'var(--space-24)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
@@ -110,18 +175,118 @@ export const BuildingsPage: React.FC = () => {
                         type="text"
                         placeholder="Buscar por prédio, endereço ou condomínio..."
                         className="search-input"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                     />
                 </div>
 
-                <button className="action-btn">
-                    <Filter size={18} />
-                    Filtros
-                </button>
+                <div style={{ position: 'relative' }}>
+                    <button 
+                        className="action-btn"
+                        onClick={() => {
+                            setShowFilters(!showFilters);
+                            setShowSortOptions(false);
+                        }}
+                        style={showFilters ? { borderColor: 'var(--color-accent)', color: 'var(--color-accent-hover)', backgroundColor: 'var(--color-accent-light)' } : undefined}
+                    >
+                        <Filter size={18} />
+                        Filtros
+                    </button>
 
-                <button className="action-btn">
-                    <LayoutGrid size={18} />
-                    Ordenar
-                </button>
+                    {showFilters && (
+                        <div className="building-card filters-popover-card" style={{ 
+                            position: 'absolute',
+                            top: 'calc(100% + 8px)',
+                            right: 0,
+                            zIndex: 50,
+                            width: '280px', 
+                            padding: '16px', 
+                            borderRadius: '12px',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '12px'
+                        }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Filtros avançados
+                            </span>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                                        Exibir inativos
+                                    </span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-light)', lineHeight: '1.25' }}>
+                                        Inclui prédios arquivados ou desativados na listagem.
+                                    </span>
+                                </div>
+                                <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '36px', height: '20px', flexShrink: 0 }}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={showInactive} 
+                                        onChange={(e) => setShowInactive(e.target.checked)}
+                                        style={{ opacity: 0, width: 0, height: 0 }} 
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                    <button 
+                        className="action-btn"
+                        onClick={() => {
+                            setShowSortOptions(!showSortOptions);
+                            setShowFilters(false);
+                        }}
+                        style={sortBy !== 'name-asc' || showSortOptions ? { borderColor: 'var(--color-accent)', color: 'var(--color-accent-hover)', backgroundColor: 'var(--color-accent-light)' } : undefined}
+                    >
+                        <LayoutGrid size={18} />
+                        {sortBy === 'name-asc' ? 'Ordenar' : `Ordenar: ${getSortLabel(sortBy)}`}
+                    </button>
+
+                    {showSortOptions && (
+                        <div className="building-card filters-popover-card" style={{ 
+                            position: 'absolute',
+                            top: 'calc(100% + 8px)',
+                            right: 0,
+                            zIndex: 50,
+                            width: '240px', 
+                            padding: '12px', 
+                            borderRadius: '12px',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: '0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                        }}>
+                            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-accent)', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 8px 8px 8px', borderBottom: '1px solid var(--border-color)', marginBottom: '4px' }}>
+                                Ordenar por
+                            </span>
+                            {sortOptions.map((option) => {
+                                const isActive = sortBy === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => {
+                                            setSortBy(option.value);
+                                            setShowSortOptions(false);
+                                        }}
+                                        className={`sort-option-item ${isActive ? 'active' : ''}`}
+                                    >
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                                            {isActive ? <Check size={14} color="var(--color-accent)" /> : <span style={{ width: 14 }} />}
+                                            {option.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="legend">
@@ -142,10 +307,10 @@ export const BuildingsPage: React.FC = () => {
             <div className="buildings-grid">
                 {loading ? (
                     <p>Carregando condomínios...</p>
-                ) : condos.length === 0 ? (
+                ) : sortedCondos.length === 0 ? (
                     <p>Nenhum condomínio encontrado.</p>
                 ) : (
-                    condos.map((building) => {
+                    sortedCondos.map((building) => {
                         const openTickets = ticketsMap[building.id as string] || 0;
                         const status = openTickets === 0 ? 'healthy' : openTickets > 5 ? 'warning' : 'attention';
                         return (
@@ -165,6 +330,87 @@ export const BuildingsPage: React.FC = () => {
                     })
                 )}
             </div>
+
+            <style>{`
+                /* Toggle Switch Styling */
+                .switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 36px;
+                    height: 20px;
+                }
+                .switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                .slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: var(--border-color);
+                    transition: .2s;
+                    border-radius: 20px;
+                }
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 14px;
+                    width: 14px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: white;
+                    transition: .2s;
+                    border-radius: 50%;
+                }
+                input:checked + .slider {
+                    background-color: var(--color-accent);
+                }
+                input:checked + .slider:before {
+                    transform: translateX(16px);
+                }
+                
+                /* Dark Mode overrides for toggle */
+                .dark .slider {
+                    background-color: #374151 !important;
+                }
+
+                /* Disable hover translation on filters popover */
+                .filters-popover-card:hover {
+                    transform: none !important;
+                    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04) !important;
+                    border-color: var(--border-color) !important;
+                }
+
+                /* Sort Option Item styling */
+                .sort-option-item {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    padding: 8px 12px;
+                    border: none;
+                    background: transparent;
+                    color: var(--text-main);
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.15s ease;
+                    text-align: left;
+                }
+                .sort-option-item:hover {
+                    background-color: var(--bg-hover);
+                    color: var(--color-accent-hover);
+                }
+                .sort-option-item.active {
+                    background-color: var(--color-accent-light);
+                    color: var(--color-accent);
+                    font-weight: 600;
+                }
+            `}</style>
         </div>
     );
 };

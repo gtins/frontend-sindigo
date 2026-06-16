@@ -24,6 +24,7 @@ import { CreateReservationModal } from './CreateReservationModal';
 import { CreateTicketModal } from './CreateTicketModal';
 import { CreateProviderModal } from './CreateProviderModal';
 import { ItemDetailsModal } from './ItemDetailsModal';
+import { EditCondominiumModal } from './EditCondominiumModal';
 import '../styles/details.css';
 
 export const BuildingDetails: React.FC = () => {
@@ -40,6 +41,7 @@ export const BuildingDetails: React.FC = () => {
     const [isCreateReservationOpen, setIsCreateReservationOpen] = useState(false);
     const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
     const [isCreateProviderOpen, setIsCreateProviderOpen] = useState(false);
+    const [isEditCondoOpen, setIsEditCondoOpen] = useState(false);
     const [isEditingMap, setIsEditingMap] = useState(false);
     const [customMapQuery, setCustomMapQuery] = useState('');
     const [activityFilter, setActivityFilter] = useState<'all' | 'open' | 'closed'>('open');
@@ -52,7 +54,7 @@ export const BuildingDetails: React.FC = () => {
     const [itemType, setItemType] = useState<'activity' | 'reservation' | 'ticket' | 'provider' | null>(null);
 
     useEffect(() => {
-        const isModalOpen = isCreateActivityOpen || isCreateReservationOpen || isCreateTicketOpen || isCreateProviderOpen || !!selectedItem;
+        const isModalOpen = isCreateActivityOpen || isCreateReservationOpen || isCreateTicketOpen || isCreateProviderOpen || isEditCondoOpen || !!selectedItem;
         if (isModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -61,7 +63,7 @@ export const BuildingDetails: React.FC = () => {
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isCreateActivityOpen, isCreateReservationOpen, isCreateTicketOpen, isCreateProviderOpen, selectedItem]);
+    }, [isCreateActivityOpen, isCreateReservationOpen, isCreateTicketOpen, isCreateProviderOpen, isEditCondoOpen, selectedItem]);
 
     const handleItemClick = (item: any, type: 'activity' | 'reservation' | 'ticket' | 'provider') => {
         setSelectedItem(item);
@@ -342,7 +344,11 @@ export const BuildingDetails: React.FC = () => {
                             </>
                         )}
                         {isAdminOrSindico && (
-                            <button className="primary-btn" style={{ height: '42px', borderRadius: '12px' }}>
+                            <button 
+                                className="primary-btn" 
+                                style={{ height: '42px', borderRadius: '12px' }}
+                                onClick={() => setIsEditCondoOpen(true)}
+                            >
                                 <Edit2 size={16} />
                                 Editar prédio
                             </button>
@@ -747,6 +753,17 @@ export const BuildingDetails: React.FC = () => {
                     onClose={() => setIsCreateProviderOpen(false)}
                     onSuccess={() => {
                         setIsCreateProviderOpen(false);
+                        setRefreshKey(prev => prev + 1);
+                    }}
+                />
+            )}
+
+            {isEditCondoOpen && (
+                <EditCondominiumModal
+                    condominium={condominium}
+                    onClose={() => setIsEditCondoOpen(false)}
+                    onSuccess={() => {
+                        setIsEditCondoOpen(false);
                         setRefreshKey(prev => prev + 1);
                     }}
                 />

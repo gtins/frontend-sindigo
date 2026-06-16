@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './components/LoginPage';
@@ -62,6 +62,44 @@ function AppLayout() {
   );
 }
 
+function TitleUpdater() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const path = location.pathname;
+    
+    if (path === '/') {
+      document.title = 'SindiGo - Gestão Condominial';
+    } else if (path === '/login') {
+      document.title = 'SindiGo - Entrar';
+    } else if (path === '/register') {
+      document.title = 'SindiGo - Cadastrar';
+    } else if (path === '/dashboard') {
+      document.title = 'SindiGo - Painel Geral';
+    } else if (path === '/buildings') {
+      document.title = 'SindiGo - Meus Condomínios';
+    } else if (path === '/calendar') {
+      document.title = 'SindiGo - Agenda de Atividades';
+    } else if (path === '/tickets') {
+      document.title = 'SindiGo - Central de Chamados';
+    } else if (path.startsWith('/buildings/') && path.endsWith('/finances')) {
+      document.title = 'SindiGo - Finanças do Condomínio';
+    } else if (path.startsWith('/buildings/') && path.endsWith('/members')) {
+      document.title = 'SindiGo - Moradores e Membros';
+    } else if (path.startsWith('/buildings/')) {
+      document.title = 'SindiGo - Detalhes do Condomínio';
+    } else if (path === '/admin/acessos') {
+      document.title = 'SindiGo - Controle de Acessos';
+    } else if (path === '/admin/auditoria') {
+      document.title = 'SindiGo - Logs de Auditoria';
+    } else {
+      document.title = 'SindiGo';
+    }
+  }, [location]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
     const savedTheme = localStorage.getItem('sindigo-theme');
@@ -74,6 +112,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <TitleUpdater />
       <Routes>
         {/* Rotas públicas */}
         <Route path="/" element={<LandingPage />} />

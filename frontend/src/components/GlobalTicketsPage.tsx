@@ -138,7 +138,7 @@ export const GlobalTicketsPage: React.FC = () => {
                     ...item,
                     id: item.condominiumId || item.id,
                     name: item.condominiumName || item.name
-                }));
+                })).filter((c: any) => c.active !== false);
                 
                 const condoNamesList = parsedCondos.map((c: any) => c.name || '').filter(Boolean);
                 setCondoNames(Array.from(new Set(condoNamesList)) as string[]);

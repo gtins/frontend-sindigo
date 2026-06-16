@@ -36,7 +36,7 @@ export const GlobalCalendarPage: React.FC = () => {
                     ...item,
                     id: item.condominiumId || item.id,
                     name: item.condominiumName || item.name
-                }));
+                })).filter((c: any) => c.active !== false);
                 
                 const activitiesResults = await Promise.all(parsedCondos.map(async (condo: Condominium) => {
                     try {

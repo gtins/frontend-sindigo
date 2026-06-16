@@ -34,6 +34,11 @@ const CondominiumService = {
     return response.data;
   },
 
+  update: async (id: string, payload: any): Promise<Condominium> => {
+    const response = await api.put(`/condominiums/${id}`, payload);
+    return response.data;
+  },
+
   // Members
   getMembers: async (condominiumId: string): Promise<any[]> => {
     const response = await api.get(`/condominiums/${condominiumId}/members`);

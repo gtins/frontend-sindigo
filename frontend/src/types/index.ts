@@ -3,12 +3,14 @@ export interface Condominium {
   name: string;
   address: string;
   unidades?: number;
+  active?: boolean;
 }
 
 export interface CreateCondominiumPayload {
   name: string;
   address: string;
   unidades: number;
+  active?: boolean;
 }
 
 export interface Activity {
