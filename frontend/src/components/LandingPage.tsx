@@ -1045,11 +1045,14 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <div className="footer-column">
-              <h5 className="footer-col-title">Contato</h5>
               <div className="footer-contact-info">
-                <span>suporte@sindigo.com.br</span>
-                <span>+55 (11) 98765-4321</span>
-                <span>São Paulo, SP - Brasil</span>
+                <span>Em breve...</span>
+                <span>
+                  Github:{' '}
+                  <a href="https://github.com/gtins" target="_blank" rel="noopener noreferrer">
+                    gtins
+                  </a>
+                </span>
               </div>
             </div>
           </div>
