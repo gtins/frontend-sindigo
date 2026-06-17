@@ -19,7 +19,7 @@ on:
 
 jobs:
   frontend-tests:
-    name: Run frontend tests and coverage
+    name: Run frontend tests, coverage and SonarCloud
     runs-on: ubuntu-latest
 
     defaults:
@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -45,6 +47,20 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=gtins_frontend-sindigo
+            -Dsonar.organization=gtins
+            -Dsonar.sources=frontend/src
+            -Dsonar.tests=frontend/src
+            -Dsonar.test.inclusions=frontend/src/**/*.test.ts,frontend/src/**/*.test.tsx,frontend/src/**/*.spec.ts,frontend/src/**/*.spec.tsx
+            -Dsonar.exclusions=frontend/node_modules/**,frontend/dist/**,frontend/coverage/**
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
       - name: Upload coverage report
         if: always()
