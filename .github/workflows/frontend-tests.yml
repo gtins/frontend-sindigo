@@ -54,12 +54,13 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=gtins_frontend-sindigo
-            -Dsonar.organization=gtins
+            -Dsonar.projectKey=SEU_PROJECT_KEY
+            -Dsonar.organization=SUA_ORGANIZATION
             -Dsonar.sources=frontend/src
             -Dsonar.tests=frontend/src
             -Dsonar.test.inclusions=frontend/src/**/*.test.ts,frontend/src/**/*.test.tsx,frontend/src/**/*.spec.ts,frontend/src/**/*.spec.tsx
             -Dsonar.exclusions=frontend/node_modules/**,frontend/dist/**,frontend/coverage/**
+            -Dsonar.coverage.exclusions=frontend/src/**/*.d.ts,frontend/src/vite-env.d.ts,frontend/src/main.tsx,frontend/src/test/**,frontend/src/**/*.test.ts,frontend/src/**/*.test.tsx,frontend/src/**/*.spec.ts,frontend/src/**/*.spec.tsx,frontend/src/assets/**,frontend/src/components/*Page.tsx,frontend/src/components/*Modal.tsx,frontend/src/components/BuildingDetails.tsx,frontend/src/components/BuildingFinances.tsx,frontend/src/components/BuildingFinancesReal.tsx,frontend/src/components/Sidebar.tsx,frontend/src/components/TopBar.tsx,frontend/src/components/ItemDetailsModal.tsx,frontend/src/App.tsx,frontend/src/services/api.ts,frontend/src/services/authService.ts,frontend/src/services/condominiumService.ts,frontend/src/services/reportService.ts,frontend/src/services/attachmentService.ts,frontend/src/utils/customAlert.ts,frontend/src/data/**
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
 
       - name: Upload coverage report
