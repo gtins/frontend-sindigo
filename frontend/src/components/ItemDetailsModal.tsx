@@ -21,6 +21,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
     const [closeStatus, setCloseStatus] = useState('');
     const [closingNotes, setClosingNotes] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
     // Attachments states
     const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -49,6 +50,7 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
             setActivityAttachments({});
             setUploadingActivityId(null);
             setShowAllActivities(false);
+            setShowCancelConfirm(false);
         }
     }, [isOpen]);
 
@@ -199,6 +201,28 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
     const isAdminOrSindico = userRole === 'ADMIN' || userRole === 'SINDICO';
 
     if (!isOpen || !item || !type) return null;
+
+    const handleCancelReservation = async () => {
+        setIsSubmitting(true);
+        try {
+            const reservation = item as Reservation;
+            const condoId = condominiumId || reservation.condominiumId;
+            if (!condoId) {
+                alert('Erro: ID do condomínio não encontrado.');
+                return;
+            }
+            await CondominiumService.cancelReservation(condoId, reservation.id);
+            alert('Reserva cancelada com sucesso!');
+            setShowCancelConfirm(false);
+            if (onItemClosed) onItemClosed();
+            onClose();
+        } catch (error) {
+            console.error('Failed to cancel reservation:', error);
+            alert('Erro ao tentar cancelar a reserva. Tente novamente.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleCloseSubmit = async () => {
         if (!closeStatus || !closingNotes.trim()) {
@@ -634,9 +658,69 @@ export const ItemDetailsModal: React.FC<ItemDetailsModalProps> = ({ isOpen, onCl
                      !['COMPLETED', 'CANCELLED', 'RESOLVED', 'CLOSED', 'RESOLVIDO', 'FECHADO'].includes((item as any).status) && (
                         <button onClick={() => setIsClosing(true)} className="secondary-btn" style={{ height: '42px', borderRadius: '12px', border: '1px solid #ef4444', color: '#ef4444', marginRight: 'auto' }}>Encerrar</button>
                     )}
+                    {type === 'reservation' && (item as Reservation).status !== 'CANCELLED' && (
+                        <button 
+                            onClick={() => setShowCancelConfirm(true)} 
+                            className="secondary-btn" 
+                            style={{ 
+                                height: '42px', 
+                                borderRadius: '12px', 
+                                border: '1px solid #ef4444', 
+                                color: '#ef4444', 
+                                marginRight: 'auto' 
+                            }}
+                            disabled={isSubmitting}
+                        >
+                            Cancelar reserva
+                        </button>
+                    )}
                     <button onClick={onClose} className="primary-btn" style={{ height: '42px', borderRadius: '12px' }}>Fechar</button>
                 </div>
             </div>
+
+            {showCancelConfirm && (
+                <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setShowCancelConfirm(false)}>
+                    <div className="modal-card" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">Cancelar reserva</h3>
+                            <button className="modal-close-btn" onClick={() => setShowCancelConfirm(false)}><X size={18} /></button>
+                        </div>
+                        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                                Tem certeza que deseja cancelar esta reserva?
+                            </p>
+                            <div style={{
+                                backgroundColor: 'var(--status-red-bg)',
+                                border: '1px solid var(--status-red-border)',
+                                borderRadius: '12px',
+                                padding: '12px 16px',
+                                color: 'var(--status-red)',
+                                fontSize: '13px',
+                                lineHeight: 1.4,
+                                display: 'flex',
+                                gap: '8px',
+                                alignItems: 'flex-start'
+                            }}>
+                                <span style={{ fontSize: '16px' }}>⚠️</span>
+                                <span>Esta ação não poderá ser desfeita. A área comum voltará a ficar disponível para outros moradores.</span>
+                            </div>
+                        </div>
+                        <div className="modal-footer" style={{ marginTop: '20px', paddingTop: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button className="secondary-btn" style={{ height: '38px', borderRadius: '10px' }} onClick={() => setShowCancelConfirm(false)} disabled={isSubmitting}>
+                                Voltar
+                            </button>
+                            <button 
+                                className="primary-btn" 
+                                style={{ height: '38px', borderRadius: '10px', backgroundColor: '#dc2626' }} 
+                                onClick={handleCancelReservation}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? 'Cancelando...' : 'Confirmar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

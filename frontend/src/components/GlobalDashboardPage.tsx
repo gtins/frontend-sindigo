@@ -195,7 +195,7 @@ export const GlobalDashboardPage: React.FC = () => {
                         <Hotel size={20} style={{ color: '#2563eb' }} />
                         <span>{condos.length}</span>
                     </div>
-                    <span className="stat-card-title">Prédios cadastrados</span>
+                    <span className="stat-card-title">Condomínios cadastrados</span>
                     <span className="stat-card-trend text-blue-trend">Total ativos</span>
                 </div>
 

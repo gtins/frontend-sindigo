@@ -151,7 +151,7 @@ export const BuildingsPage: React.FC = () => {
                         <div style={{ width: '42px', height: '42px', borderRadius: '12px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             <Hotel size={22} color="var(--color-accent)" />
                         </div>
-                        <h2 className="page-title" style={{ margin: 0 }}>Prédios gerenciados</h2>
+                        <h2 className="page-title" style={{ margin: 0 }}>Condomínios</h2>
                     </div>
                     <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                         Gerencie os condomínios cadastrados, unidades, chamados e status operacional.

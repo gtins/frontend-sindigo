@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = () => {
 
                     <Link to="/buildings" className={`nav-item ${isActive('/buildings') ? 'active' : ''}`}>
                         <Hotel className="nav-icon" size={20} />
-                        <span>Prédios</span>
+                        <span>Condomínios</span>
                     </Link>
 
                     <Link to="/calendar" className={`nav-item ${isActive('/calendar') ? 'active' : ''}`}>

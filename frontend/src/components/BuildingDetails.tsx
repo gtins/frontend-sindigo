@@ -397,7 +397,7 @@ export const BuildingDetails: React.FC = () => {
                         {/* Activities Section */}
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Atividades recentes</h3>
+                                <h3 className="section-title">Atividades</h3>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <select 
                                         value={activityFilter} 
@@ -533,7 +533,7 @@ export const BuildingDetails: React.FC = () => {
                         {/* Tickets Section */}
                         <div className="section-card">
                             <div className="section-header">
-                                <h3 className="section-title">Chamados abertos</h3>
+                                <h3 className="section-title">Chamados</h3>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     <button className="secondary-btn" style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Filter size={16} />

@@ -85,6 +85,11 @@ const CondominiumService = {
     return response.data;
   },
 
+  cancelReservation: async (condominiumId: string, reservationId: string): Promise<Reservation> => {
+    const response = await api.patch(`/condominiums/${condominiumId}/reservations/${reservationId}/cancel`);
+    return response.data;
+  },
+
   checkAvailability: async (condominiumId: string, area: string, date: string): Promise<AvailabilityResponse> => {
     const response = await api.get(`/condominiums/${condominiumId}/reservations/availability`, {
       params: { area, date }
