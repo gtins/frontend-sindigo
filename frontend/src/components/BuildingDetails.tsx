@@ -5,7 +5,6 @@ import {
     MapPin,
     Edit2,
     Plus,
-    Filter,
     ShieldCheck,
     AlertCircle,
     Calendar,
