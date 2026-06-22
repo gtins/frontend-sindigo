@@ -45,6 +45,11 @@ export const BuildingDetails: React.FC = () => {
     const [isEditingMap, setIsEditingMap] = useState(false);
     const [customMapQuery, setCustomMapQuery] = useState('');
     const [activityFilter, setActivityFilter] = useState<'all' | 'open' | 'closed'>('open');
+    const [ticketFilter, setTicketFilter] = useState<'all' | 'open' | 'closed'>('open');
+    const [reservationFilter, setReservationFilter] = useState<'all' | 'confirmed' | 'cancelled' | 'pending'>('all');
+    const [activityPage, setActivityPage] = useState(1);
+    const [ticketPage, setTicketPage] = useState(1);
+    const [reservationPage, setReservationPage] = useState(1);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const userRole = localStorage.getItem('role') || 'MORADOR';
@@ -263,8 +268,7 @@ export const BuildingDetails: React.FC = () => {
                 if (tkts && !Array.isArray(tkts)) {
                     ticketsData = (tkts as any).content || (tkts as any).data || (tkts as any).items || [];
                 }
-                const openTicketsList = (ticketsData || []).filter((t: any) => !['CLOSED', 'RESOLVED', 'FECHADO', 'RESOLVIDO', 'CANCELADO'].includes(t.status));
-                setTickets(openTicketsList);
+                setTickets(ticketsData || []);
             } catch (err) {
                 console.error("Tickets unavailable:", err);
             }
@@ -308,6 +312,61 @@ export const BuildingDetails: React.FC = () => {
         if (activityFilter === 'closed') return isClosed;
         return true;
     });
+
+    const filteredTickets = tickets.filter(t => {
+        const isClosed = ['CLOSED', 'RESOLVED', 'FECHADO', 'RESOLVIDO', 'CANCELADO'].includes(t.status || '');
+        if (ticketFilter === 'open') return !isClosed;
+        if (ticketFilter === 'closed') return isClosed;
+        return true;
+    });
+
+    const filteredReservations = reservations.filter(res => {
+        if (reservationFilter === 'confirmed') return res.status === 'CONFIRMED';
+        if (reservationFilter === 'cancelled') return res.status === 'CANCELLED';
+        if (reservationFilter === 'pending') return res.status === 'PENDING';
+        return true;
+    });
+
+    const recordsPerPage = 5;
+
+    const activityTotalPages = Math.max(Math.ceil(filteredActivities.length / recordsPerPage), 1);
+    const activityStartIndex = (activityPage - 1) * recordsPerPage;
+    const currentActivities = filteredActivities.slice(activityStartIndex, activityStartIndex + recordsPerPage);
+
+    const ticketTotalPages = Math.max(Math.ceil(filteredTickets.length / recordsPerPage), 1);
+    const ticketStartIndex = (ticketPage - 1) * recordsPerPage;
+    const currentTickets = filteredTickets.slice(ticketStartIndex, ticketStartIndex + recordsPerPage);
+
+    const reservationTotalPages = Math.max(Math.ceil(filteredReservations.length / recordsPerPage), 1);
+    const reservationStartIndex = (reservationPage - 1) * recordsPerPage;
+    const currentReservations = filteredReservations.slice(reservationStartIndex, reservationStartIndex + recordsPerPage);
+
+    const renderPagination = (currentPage: number, totalPages: number, setPage: (page: number) => void) => {
+        if (totalPages <= 1) return null;
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
+                <button
+                    onClick={() => setPage(Math.max(currentPage - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="nav-arrow-btn"
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border-btn-neutral)', backgroundColor: 'var(--bg-btn-neutral)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 }}
+                >
+                    <ChevronRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                </button>
+                <span style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    Página {currentPage} de {totalPages}
+                </span>
+                <button
+                    onClick={() => setPage(Math.min(currentPage + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="nav-arrow-btn"
+                    style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--border-btn-neutral)', backgroundColor: 'var(--bg-btn-neutral)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                >
+                    <ChevronRight size={16} />
+                </button>
+            </div>
+        );
+    };
 
     return (
         <div className="dashboard-container">
@@ -401,7 +460,7 @@ export const BuildingDetails: React.FC = () => {
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <select 
                                         value={activityFilter} 
-                                        onChange={(e) => setActivityFilter(e.target.value as any)}
+                                        onChange={(e) => { setActivityFilter(e.target.value as any); setActivityPage(1); }}
                                         className="action-btn"
                                         style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
                                     >
@@ -427,7 +486,7 @@ export const BuildingDetails: React.FC = () => {
                                         </p>
                                     </div>
                                 ) : null}
-                                {Array.isArray(filteredActivities) && filteredActivities.map(activity => (
+                                {Array.isArray(currentActivities) && currentActivities.map(activity => (
                                     <div key={(activity as any).activityId || activity.id} className="activity-item clickable-item" onClick={() => handleItemClick({ ...activity, id: (activity as any).activityId || activity.id }, 'activity')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
                                         <div className="activity-icon hover-icon-white" style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: 'var(--color-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-accent)', flexShrink: 0, marginRight: '16px' }}>
                                             {activity.type === 'ONCE' ? <Calendar size={20} color="var(--color-accent)" /> : <Calendar size={20} color="#22c55e" />}
@@ -451,13 +510,25 @@ export const BuildingDetails: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
+                            {renderPagination(activityPage, activityTotalPages, setActivityPage)}
                         </div>
 
                         {/* Reservations Section */}
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Reservas</h3>
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <select 
+                                        value={reservationFilter} 
+                                        onChange={(e) => { setReservationFilter(e.target.value as any); setReservationPage(1); }}
+                                        className="action-btn"
+                                        style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
+                                    >
+                                        <option value="all">Todas</option>
+                                        <option value="confirmed">Confirmadas</option>
+                                        <option value="cancelled">Canceladas</option>
+                                        <option value="pending">Pendentes</option>
+                                    </select>
                                     <button className="secondary-btn" onClick={() => setIsCreateReservationOpen(true)} style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Plus size={16} />
                                         Nova reserva
@@ -466,15 +537,15 @@ export const BuildingDetails: React.FC = () => {
                             </div>
 
                             <div className="activity-list">
-                                {(!Array.isArray(reservations) || reservations.length === 0) ? (
+                                {(!Array.isArray(filteredReservations) || filteredReservations.length === 0) ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
                                         <BookOpen size={32} style={{ marginBottom: '12px', color: '#94a3b8' }} />
                                         <p style={{ fontSize: '0.875rem', margin: 0, maxWidth: '320px', lineHeight: '1.5' }}>
-                                            Nenhuma reserva registrada ainda. Reserve áreas comuns como salão de festas ou churrasqueira.
+                                            Nenhuma reserva encontrada.
                                         </p>
                                     </div>
                                 ) : null}
-                                {Array.isArray(reservations) && reservations.map(res => {
+                                {Array.isArray(currentReservations) && currentReservations.map(res => {
                                     const statusInfo = getReservationStatusInfo(res.status);
                                     return (
                                         <div key={res.id} className="activity-item clickable-item" onClick={() => handleItemClick(res, 'reservation')} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
@@ -528,17 +599,24 @@ export const BuildingDetails: React.FC = () => {
                                     );
                                 })}
                             </div>
+                            {renderPagination(reservationPage, reservationTotalPages, setReservationPage)}
                         </div>
 
                         {/* Tickets Section */}
                         <div className="section-card">
                             <div className="section-header">
                                 <h3 className="section-title">Chamados</h3>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button className="secondary-btn" style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <Filter size={16} />
-                                        Filtrar
-                                    </button>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                    <select 
+                                        value={ticketFilter} 
+                                        onChange={(e) => { setTicketFilter(e.target.value as any); setTicketPage(1); }}
+                                        className="action-btn"
+                                        style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', padding: '0 12px', paddingRight: '32px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-input)', color: 'var(--text-main)', cursor: 'pointer', outline: 'none' }}
+                                    >
+                                        <option value="all">Todos</option>
+                                        <option value="open">Pendentes</option>
+                                        <option value="closed">Fechados</option>
+                                    </select>
                                     <button className="primary-btn" onClick={() => setIsCreateTicketOpen(true)} style={{ height: '38px', borderRadius: '10px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                         <Plus size={16} />
                                         Novo chamado
@@ -547,15 +625,15 @@ export const BuildingDetails: React.FC = () => {
                             </div>
 
                             <div className="ticket-list">
-                                {tickets.length === 0 ? (
+                                {filteredTickets.length === 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 16px', textAlign: 'center', color: '#64748b' }}>
                                         <AlertCircle size={32} style={{ marginBottom: '12px', color: '#94a3b8' }} />
                                         <p style={{ fontSize: '0.875rem', margin: 0, maxWidth: '320px', lineHeight: '1.5' }}>
-                                            Nenhum chamado aberto no momento. Quando houver solicitações pendentes, elas aparecerão aqui.
+                                            Nenhum chamado encontrado.
                                         </p>
                                     </div>
                                 ) : null}
-                                {tickets.map(ticket => {
+                                {currentTickets.map(ticket => {
                                     const priorityInfo = getTicketPriorityInfo(ticket.priority);
                                     return (
                                         <div key={ticket.id} className="ticket-item clickable-item" onClick={() => handleItemClick(ticket, 'ticket')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', border: '1px solid var(--border-color)', borderRadius: '12px', backgroundColor: 'var(--bg-surface)', marginBottom: '8px' }}>
@@ -582,6 +660,7 @@ export const BuildingDetails: React.FC = () => {
                                     );
                                 })}
                             </div>
+                            {renderPagination(ticketPage, ticketTotalPages, setTicketPage)}
                         </div>
                     </div>
 

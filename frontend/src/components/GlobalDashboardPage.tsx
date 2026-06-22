@@ -117,7 +117,10 @@ export const GlobalDashboardPage: React.FC = () => {
         return `venceu há ${Math.abs(diffDays)} dias`;
     };
 
-    const activeActivities = activities.filter(a => a.status !== 'CLOSED' && a.startDate);
+    const activeActivities = activities.filter(a => 
+        a.startDate && 
+        !['CLOSED', 'COMPLETED', 'CANCELLED', 'RESOLVIDO', 'FECHADO'].includes(a.status || '')
+    );
     const today = new Date();
     today.setHours(0,0,0,0);
 
